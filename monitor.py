@@ -20,7 +20,7 @@ def monitor(device, frames_per_detection=20):
     while True:
         try:
             frames = []
-            for i in range(frames_per_detection):
+            for _ in range(frames_per_detection):
                 ret, frame = camera.read()
                 if not ret:
                     raise RuntimeError("Stream interrupted.")
