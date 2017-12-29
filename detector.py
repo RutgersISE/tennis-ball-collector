@@ -9,11 +9,13 @@ YUPPER = np.array([50, 255, 255])
 MINAREA = 50
 KSIZE = (5, 5)
 ITER = 5
+THRESHOLD = .90
 
 class ColorMaskBallDetector(object):
-    def __init__(self, lower=YLOWER, upper=YUPPER, area=MINAREA, ksize=KSIZE, iterations=ITER):
+    def __init__(self, lower=YLOWER, upper=YUPPER, thresh=THRESHOLD, area=MINAREA, ksize=KSIZE, iterations=ITER):
         self.lower = lower
         self.upper = upper
+        self.thresh = thresh
         self.ksize = ksize
         self.iterations = iterations
         params = cv2.SimpleBlobDetector_Params()
@@ -52,7 +54,9 @@ class ColorMaskBallDetector(object):
 
     def detect_many(self, images):
         masks = np.stack([self.make_mask(image) for image in images], axis=2)
-        mask = np.max(masks, axis=2)
+        levels = np.mean(masks, axis=2)
+        mask = np.zeros(images[0].shape[0:2], dtype=np.uint8)
+        mask[levels > self.thresh] = 255
         coords = self.get_coords(mask)
         return coords, mask
 
