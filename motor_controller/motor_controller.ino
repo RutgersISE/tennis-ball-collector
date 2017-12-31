@@ -1,6 +1,6 @@
 #include <Stepper.h>
 
-#define BUFFER_SIZE 30
+#define BUFFER_SIZE 64
 #define STEPS_PER_READ 10
 
 long positions[2];
@@ -19,7 +19,7 @@ int parse(int* left_rpm, int* right_rpm) {
   // message format:left_rpm right_rpm \n
   char buffer[BUFFER_SIZE + 1];
   byte size = Serial.readBytes(buffer, BUFFER_SIZE);
-  buffer[size] = 0;
+  buffer[size] = '\0';
   int i = 0;
   char* tok = strtok(buffer, " ");
   while (tok != 0) {
@@ -34,7 +34,7 @@ int parse(int* left_rpm, int* right_rpm) {
     tok = strtok(0, " ");
   }
   // success requires that only 4 tokens were found
-  return i == 2;
+  return size;
 }
 
 void setup() {
@@ -48,6 +48,7 @@ int right_rpm = 0;
 void loop() {
  if (Serial.available()) {
    int parse_success = parse(&left_rpm, &right_rpm);
+   Serial.println(parse_success);
    left_stepper.setSpeed(abs(left_rpm));
    right_stepper.setSpeed(abs(right_rpm));
  }
