@@ -1,5 +1,4 @@
 #include <Stepper.h>
-#include <MultiStepper.h>
 
 #define BUFFER_SIZE 30
 #define STEPS_PER_READ 10
@@ -29,7 +28,7 @@ int parse(int* left_rpm, int* right_rpm) {
       case 0:
         *left_rpm = val;
       case 1:
-        *right_rpm = val; 
+        *right_rpm = val;
     }
     i++;
     tok = strtok(0, " ");
