@@ -9,7 +9,7 @@ typedef enum {FORWARD = 0, REVERSE = 1} direction_t;
 Stepper left_stepper(200, 4, 5);
 Stepper right_stepper(200, 2, 3);
 
-inline int sgn(int a) {
+inline int sign(int a) {
   if (a < 0) return -1;
   else if (a > 0) return 1;
   else return 0;
@@ -39,22 +39,41 @@ int parse(int* left_rpm, int* right_rpm) {
 
 void setup() {
   Serial.begin(9600);
-  Serial.setTimeout(50); // lowers serial latency
+  Serial.setTimeout(5); // lowers serial latency
 }
 
 int left_rpm = 0;
 int right_rpm = 0;
+int left_target_rpm = 0;
+int right_target_rpm = 0;
 
 void loop() {
  if (Serial.available()) {
-   int parse_success = parse(&left_rpm, &right_rpm);
+   int parse_success = parse(&left_target_rpm, &right_target_rpm);
    Serial.println(parse_success);
-   left_stepper.setSpeed(abs(left_rpm));
-   right_stepper.setSpeed(abs(right_rpm));
  }
 
+ if (left_rpm != left_target_rpm) {
+  if (left_target_rpm == 0) {
+    left_rpm = left_target_rpm;
+  } else {
+    left_rpm += 5*sign(left_target_rpm - left_rpm);
+  }
+  left_rpm = left_target_rpm != 0 && abs(left_rpm) < 20 ? 20*sign(left_rpm) : left_rpm;
+  left_stepper.setSpeed(abs(left_rpm));
+ }
+
+ if (right_rpm != right_target_rpm) {
+  if (right_target_rpm == 0) {
+    right_rpm = right_target_rpm;
+  } else {
+    right_rpm += 5*sign(right_target_rpm - right_rpm);
+  }
+  right_rpm = right_target_rpm != 0 && abs(right_rpm) < 20 ? 20*sign(right_rpm) : right_rpm;
+  right_stepper.setSpeed(abs(right_rpm));
+ }
  for (int i = 0; i < STEPS_PER_READ; i++) {
-   right_stepper.step(-sgn(right_rpm));
-   left_stepper.step(sgn(left_rpm));
+  right_stepper.step(-sign(right_rpm));
+  left_stepper.step(sign(left_rpm));
  }
 }
