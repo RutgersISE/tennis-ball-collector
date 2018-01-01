@@ -37,20 +37,22 @@ class Controller(object):
             logger.info("reconfigured turning_move_calibration=%s" % turning_move_calibration)
 
     def _send(self, left_speed, right_speed):
-        message = b"%d %d\r\n" % (left_speed, right_speed)
+        message = "%d %d\r\n" % (left_speed, right_speed)
         self.serial.flush()
-        self.serial.write(message)
+        self.serial.write(message.encode())
 
-    def send(self, left_speed, right_speed, move_time):
+    def move(self, left_speed, right_speed, move_time, stop=True):
         self._send(left_speed, right_speed)
         time.sleep(move_time)
-        self._send(0, 0)
+        if stop:
+            self._send(0, 0)
 
-    def send_many(self, instructions):
-        for left_speed, right_speed, move_time in instructions:
+    def move_many(self, moves, stop=True):
+        for left_speed, right_speed, move_time in moves:
             self._send(left_speed, right_speed)
             time.sleep(move_time)
-        self._send(0, 0)
+        if stop:
+            self._send(0, 0)
 
     def move_to(self, x, y, speed=50):
         """ performs simple two phase moves: rotate and move forward. """
@@ -83,5 +85,13 @@ if __name__ == "__main__":
                         help="baud rate of motor controller.")
     args = parser.parse_args()
 
+    moves = [
+        ( 50,  50, 5),
+        (100, 100, 5),
+        (150, 150, 5),
+        (200, 200, 5),
+        (250, 250, 5) 
+    ]
+
     controller = Controller(args.port, args.baud)
-    controller.send(20, 20, 1)
+    controller.move_many(moves)
