@@ -3,9 +3,6 @@
 #define BUFFER_SIZE 64
 #define STEPS_PER_READ 10
 
-long positions[2];
-typedef enum {FORWARD = 0, REVERSE = 1} direction_t;
-
 Stepper left_stepper(200, 4, 5);
 Stepper right_stepper(200, 2, 3);
 
