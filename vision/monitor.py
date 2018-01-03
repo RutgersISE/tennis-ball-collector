@@ -1,61 +1,54 @@
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("monitor")
-
 import numpy as np
 import cv2
 import time
 
 from localization import ColorMaskDetector, RANSACBackProjector
 
-def watch_camera(device, calibration_file):
+def watch(device, calibration_file, show=False):
     """ opens camera device and executes the ball detectors """
-    logger.info("Calibrating camera.")
     calibration = np.load(calibration_file)
-    camera_matrix = calibration["camera_matrix"]
-    dist_coeffs = calibration["dist_coeffs"]
-    new_camera_matrix = calibration["new_camera_matrix"]
     height = calibration["height"]
     width = calibration["width"]
-    map_x, map_y = cv2.initUndistortRectifyMap(camera_matrix, dist_coeffs, None,
-                                               new_camera_matrix, (width, height), 5)
-    logger.info("Opening camera device %s." % device)
+    map_x, map_y = cv2.initUndistortRectifyMap(calibration["camera_matrix"],
+                                               calibration["dist_coeffs"],
+                                               None,
+                                               calibration["new_camera_matrix"],
+                                               (width, height),
+                                               5)
     camera = cv2.VideoCapture(device)
     if not camera.isOpened():
         raise RuntimeError("Camera device %s not found." % device)
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    camera.set(cv2.CAP_PROP_FPS, 5)
-    _, average = camera.read()
-    average = np.float32(average)
-    logger.info("Initializing ball detector.")
+    camera.set(cv2.CAP_PROP_FPS, 10) # high frame rate is not necessary here
     detector = ColorMaskDetector()
-    logger.info("Monitoring camera device %s." % device)
+    backprojector = RANSACBackProjector()
     while True:
         try:
-            ret, frame = camera.read()
-            frame = cv2.remap(frame, map_x, map_y, cv2.INTER_LINEAR)
-            cv2.accumulateWeighted(frame, average, .25)
-            smoothed = cv2.convertScaleAbs(average)
-            image_points, mask = detector.detect(smoothed)
-            cv2.imshow("smoothed feed", smoothed)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-               break
-            if image_points.size:
-                yield image_points
-        except KeyboardInterrupt:
-            logger.info("KeyboardInterrupt recieved, shutting stream.")
+            average = np.zeros((height, width, 3), dtype=np.float32)
+            for i in range(1):
+                ret, frame = camera.read()
+                cv2.accumulate(frame, average)
+            average = (average/1.0).astype(np.uint8)
+            image = cv2.remap(average, map_x, map_y, cv2.INTER_LINEAR)
+            image_points, mask = detector.detect(image)
+            if not image_points.size:
+                continue
+            object_points = backprojector.back_project(image_points, 0)
+            yield object_points
+            if show:
+                for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
+                    cv2.circle(average, (img_x, img_y), 3, (0, 0, 0), -1)
+                    text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
+                    cv2.putText(average, text, (img_x + 5, img_y - 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
+                cv2.imshow("%s: analysis feed" % device, average)
+                cv2.imshow("%s: color mask" % device, mask)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+        except (KeyboardInterrupt, SystemExit):
             break
     camera.release()
-
-def main(device, calibration_file):
-    backprojector = RANSACBackProjector()
-    for image_points in watch_camera(device, calibration_file):
-        object_points = backprojector.back_project(image_points, 0)
-        object_x = object_points[:, 0]
-        object_y = object_points[:, 1]
-        print(object_points)
-
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -69,4 +62,5 @@ if __name__ == "__main__":
                         default="runtime/logitech_480p_calibration.npz")
     args = parser.parse_args()
 
-    main(args.device, args.calibration_file)
+    for object_points in watch(args.device, args.calibration_file, True):
+        print(object_points)
