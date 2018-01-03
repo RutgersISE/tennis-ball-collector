@@ -1,7 +1,3 @@
-import logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("monitor")
-
 import numpy as np
 import cv2
 import json
