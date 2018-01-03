@@ -1,9 +1,20 @@
+#!/usr/bin/env python3
+"""
+Vision system for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
 import numpy as np
 import cv2
 import json
+import os
 
-BACKPROJECTION_FILE = "runtime/logitech_480p_backprojection.npz"
-COLORMASK_FILE = "runtime/tennis_ball_color_mask.json"
+CURRDIR = os.path.dirname(__file__)
+CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
+BACKPROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
+COLORMASK_FILE = os.path.join(CURRDIR, "runtime/tennis_ball_color_mask.json")
 
 class RANSACBackProjector(object):
 
@@ -16,6 +27,8 @@ class RANSACBackProjector(object):
         self.rhs = self.inv_rotation_matrix.dot(self.translation_vector)
 
     def back_project(self, image_points, height):
+        if not image_points.size:
+            return image_points # if empty, just return another empty
         e = np.ones((image_points.shape[0], 1))
         image_points = np.append(image_points, e, axis=1).T
         lhs = self.lhs_part.dot(image_points)
@@ -90,47 +103,44 @@ def watch(device, calibration_file, show=False):
         raise RuntimeError("Camera device %s not found." % device)
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    camera.set(cv2.CAP_PROP_FPS, 10) # high frame rate is not necessary here
+    camera.set(cv2.CAP_PROP_FPS, 20) # high frame rate is not necessary here
     detector = ColorMaskDetector()
     backprojector = RANSACBackProjector()
     while True:
         try:
             average = np.zeros((height, width, 3), dtype=np.float32)
-            for i in range(1):
+            for i in range(3):
                 ret, frame = camera.read()
                 cv2.accumulate(frame, average)
-            average = (average/1.0).astype(np.uint8)
+            average = (average/3.0).astype(np.uint8)
             image = cv2.remap(average, map_x, map_y, cv2.INTER_LINEAR)
             image_points, mask = detector.detect(image)
-            if not image_points.size:
-                continue
             object_points = backprojector.back_project(image_points, 0)
-            yield object_points
             if show:
                 for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
-                    cv2.circle(average, (img_x, img_y), 3, (0, 0, 0), -1)
+                    cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
                     text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
-                    cv2.putText(average, text, (img_x + 5, img_y - 5),
+                    cv2.putText(image, text, (img_x + 5, img_y - 5),
                                 cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
-                cv2.imshow("%s: analysis feed" % device, average)
+                cv2.imshow("%s: analysis feed" % device, image)
                 cv2.imshow("%s: color mask" % device, mask)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
+            yield object_points
         except (KeyboardInterrupt, SystemExit):
             break
     camera.release()
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
-    import matplotlib.pyplot as plt
     parser = ArgumentParser(description="Detector for tennis ball collector.")
     parser.add_argument("--device",
                         help="camera device to monitor",
                         default="/dev/video0")
     parser.add_argument("--calibration_file",
                         help="calibration for camera",
-                        default="runtime/logitech_480p_calibration.npz")
+                        default=CALIBRATION_FILE)
+    parser.add_argument("--show", action="store_true")
     args = parser.parse_args()
-
-    for object_points in watch(args.device, args.calibration_file, True):
-        print(object_points)
+    for object_points in watch(args.device, args.calibration_file, args.show):
+        continue
