@@ -33,38 +33,47 @@ class ArduinoCommander(object):
 
 class PointAndShootPlanner(object):
 
-    def __init__(self, min_speed=20, max_speed=150):
-        self.min_speed = min_speed
-        self.max_speed = max_speed
+    def __init__(self, speed=200, turn_scaling=110, forward_scaling=115):
+        self.speed = speed
+        self.turn_scaling = turn_scaling
+        self.forward_scaling = forward_scaling
         self.curr_left_speed = self.curr_right_speed = 0
 
-    def _compute_trajectory(self, disp_x, disp_y):
-        #disp_rho = np.sqrt(disp_x**2 + disp_y**2)
-        disp_phi = np.arctan2(disp_y, disp_x) - np.pi/2 # 90 degree correction for headings
-        print(disp_phi)
-        if not np.isclose(disp_phi, 0, rtol=2e-1, atol=2e-1):
-            # if angle is significantly different, then turn
-            if disp_phi > 0:
-                return -1, 0
-            else:
-                return 0, -1
+    def _compute_turn(self, disp_x, disp_y):
+        disp_phi = np.arctan2(disp_y, disp_x) - np.pi/2
+        if np.isclose(disp_phi, 0, atol=1e-1):
+            return 0, 0, 0
+        elif disp_phi < 0:
+            direction = np.array([-1, 1])
         else:
-            return 1, 1
+            direction = np.array([1, -1])
+        left_speed, right_speed = self.speed*direction
+        move_time = np.abs(disp_phi)/self.speed*self.turn_scaling
+        return left_speed, right_speed, move_time
+
+    def _compute_forward(self, disp_x, disp_y):
+        disp_rho = np.sqrt(disp_x**2 + disp_y**2)
+        if np.isclose(disp_rho, 0, atol=1e-1):
+             return 0, 0, 0
+        direction = np.array([1, 1])     
+        left_speed, right_speed = self.speed*direction
+        move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
+        return left_speed, right_speed, move_time
 
     def plan(self, disp_x, disp_y):
-        left_dir, right_dir = self._compute_trajectory(disp_x, disp_y)
-        left_speed = self.speed*left_dir
-        right_speed = self.speed*right_dir
-        return left_speed, right_speed, move_time
+        left_speed, right_speed, move_time = self._compute_turn(disp_x, disp_y)
+        yield left_speed, right_speed, move_time
+        print(left_speed, right_speed, move_time)
+        left_speed, right_speed, move_time = self._compute_forward(disp_x, disp_y)
+        print(left_speed, right_speed, move_time)
+        yield left_speed, right_speed, move_time
 
 def move(port, baud):
     controller = ArduinoController(port, baud)
     planner = PointAndShootPlanner()
     while True:
         object_points = yield # they're called coroutines and I just learned about them too
-        print(object_points)
         left_speed, right_speed = planner.plan(object_points)
-        print(left_speed, right_speed)
         controller.control(left_speed, right_speed)
 
 if __name__ == "__main__":
@@ -79,7 +88,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     commander = ArduinoCommander(args.port, args.baud)
-    planner = PointAndShootPlanner(args.speed)
+    planner = PointAndShootPlanner()
     while True:
         try:
             raw_instructions = input("robot: ")
@@ -89,10 +98,14 @@ if __name__ == "__main__":
             if "speed" in command_level:
                 left_speed, right_speed = arg_1, arg_2
                 commander.command(left_speed, right_speed)
-            #elif "point" in command_level:
-            #    disp_x, disp_y = arg_1, arg_2
-            #    left_speed, right_speed, move_time = planner.plan(disp_x, disp_y)
-        except BaseException as e:
-            print(e)
+            elif "point" in command_level:
+                disp_x, disp_y = float(arg_1), float(arg_2)
+                for left_speed, right_speed, move_time in planner.plan(disp_x, disp_y):
+                    if move_time == 0:
+                        continue
+                    commander.command(left_speed, right_speed)
+                    time.sleep(move_time)
+                commander.command(0, 0)
+        except KeyboardInterrupt:
             break
     commander.command(0, 0)
