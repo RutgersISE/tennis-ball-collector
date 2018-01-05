@@ -10,6 +10,7 @@ import numpy as np
 import cv2
 import json
 import os
+import sys
 
 CURRDIR = os.path.dirname(__file__)
 CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
@@ -87,7 +88,7 @@ class ColorMaskDetector(object):
         image_points = self.get_coords(mask)
         return image_points, mask
 
-def watch(device, calibration_file, show=False):
+def watch_cv2(device, calibration_file, show=False):
     """ opens camera device and executes the ball detectors """
     calibration = np.load(calibration_file)
     height = calibration["height"]
@@ -130,6 +131,34 @@ def watch(device, calibration_file, show=False):
         except (KeyboardInterrupt, SystemExit):
             break
     camera.release()
+
+def watch_picam(calibration_file):
+    if "picamera" not in sys.modules:
+        import picamera
+    with picamera.PiCamera(
+        sensor_mode=4, # 1640x1232 with binning,
+        framerate=10) as camera:
+        camera.start_preview()
+        time.sleep(2)
+        while True:
+            with picamera.array.PiRGBArray(camera) as stream:
+                camera.capture(stream, format='bgr')
+                image = stream.array
+                image_points, mask = detector.detect(image)
+                object_points = backprojector.back_project(image_points, 0)
+                if show:
+                    for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
+                        cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
+                        text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
+                        cv2.putText(image, text, (img_x + 5, img_y - 5),
+                                    cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
+                    cv2.imshow("%s: analysis feed" % device, image)
+                    cv2.imshow("%s: color mask" % device, mask)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
+                yield object_points
+            except (KeyboardInterrupt, SystemExit):
+                break
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
