@@ -33,7 +33,7 @@ class ArduinoCommander(object):
 
 class PointAndShootPlanner(object):
 
-    def __init__(self, speed=200, turn_scaling=110, forward_scaling=115):
+    def __init__(self, speed=50, turn_scaling=110, forward_scaling=115):
         self.speed = speed
         self.turn_scaling = turn_scaling
         self.forward_scaling = forward_scaling
@@ -55,7 +55,7 @@ class PointAndShootPlanner(object):
         disp_rho = np.sqrt(disp_x**2 + disp_y**2)
         if np.isclose(disp_rho, 0, atol=1e-1):
              return 0, 0, 0
-        direction = np.array([1, 1])     
+        direction = np.array([1, 1])
         left_speed, right_speed = self.speed*direction
         move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
         return left_speed, right_speed, move_time
