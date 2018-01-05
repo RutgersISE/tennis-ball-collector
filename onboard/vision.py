@@ -11,6 +11,7 @@ import cv2
 import json
 import os
 import sys
+import time
 
 CURRDIR = os.path.dirname(__file__)
 CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
@@ -132,17 +133,22 @@ def watch_cv2(device, calibration_file, show=False):
             break
     camera.release()
 
-def watch_picam(calibration_file):
+def watch_picam(calibration_file, show=False):
     if "picamera" not in sys.modules:
         import picamera
+        import picamera.array
+    detector = ColorMaskDetector()
+    backprojector = RANSACBackProjector()
     with picamera.PiCamera(
         sensor_mode=4, # 1640x1232 with binning,
         framerate=10) as camera:
-        camera.start_preview()
+        camera.resolution = (640, 368)
+        camera.video_stabilization = True
+        camera.vflip = True
+        camera.hflip = True
         time.sleep(2)
-        while True:
-            with picamera.array.PiRGBArray(camera) as stream:
-                camera.capture(stream, format='bgr')
+        with picamera.array.PiRGBArray(camera, size=camera.resolution) as stream:
+            for frame in camera.capture_continuous(stream, format="bgr", use_video_port=True):
                 image = stream.array
                 image_points, mask = detector.detect(image)
                 object_points = backprojector.back_project(image_points, 0)
@@ -152,13 +158,12 @@ def watch_picam(calibration_file):
                         text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
                         cv2.putText(image, text, (img_x + 5, img_y - 5),
                                     cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
-                    cv2.imshow("%s: analysis feed" % device, image)
-                    cv2.imshow("%s: color mask" % device, mask)
+                    cv2.imshow("picam: analysis feed", image)
+                    cv2.imshow("picam: color mask", mask)
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         break
+                stream.truncate(0)
                 yield object_points
-            except (KeyboardInterrupt, SystemExit):
-                break
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -169,7 +174,14 @@ if __name__ == "__main__":
     parser.add_argument("--calibration_file",
                         help="calibration for camera",
                         default=CALIBRATION_FILE)
+    parser.add_argument("--picam", action="store_true")
     parser.add_argument("--show", action="store_true")
     args = parser.parse_args()
-    for object_points in watch(args.device, args.calibration_file, args.show):
-        continue
+    if args.picam:
+        for object_points in watch_picam(args.calibration_file, args.show):
+            if object_points.size:
+                print(object_points)
+    else:
+       for object_points in watch_cv(args.device, args.calibration_file, args.show):
+            if object_points.size:
+                print(object_points)
