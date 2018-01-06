@@ -15,12 +15,12 @@ import time
 
 CURRDIR = os.path.dirname(__file__)
 CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
-BACKPROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
+PROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
 COLORMASK_FILE = os.path.join(CURRDIR, "runtime/tennis_ball_color_mask.json")
 
-class RANSACBackProjector(object):
+class RANSACProjector(object):
 
-    def __init__(self, config_file=BACKPROJECTION_FILE):
+    def __init__(self, config_file=PROJECTION_FILE):
         self.config = np.load(config_file)
         self.inv_rotation_matrix = self.config["inv_rotation_matrix"]
         self.translation_vector = self.config["translation_vector"]
@@ -28,7 +28,7 @@ class RANSACBackProjector(object):
         self.lhs_part = self.inv_rotation_matrix.dot(self.inv_camera_matrix)
         self.rhs = self.inv_rotation_matrix.dot(self.translation_vector)
 
-    def back_project(self, image_points, height):
+    def project(self, image_points, height):
         if not image_points.size:
             return image_points # if empty, just return another empty
         e = np.ones((image_points.shape[0], 1))
@@ -89,56 +89,75 @@ class ColorMaskDetector(object):
         image_points = self.get_coords(mask)
         return image_points, mask
 
-def watch_cv2(device, calibration_file, show=False):
-    """ opens camera device and executes the ball detectors """
-    calibration = np.load(calibration_file)
-    height = calibration["height"]
-    width = calibration["width"]
-    map_x, map_y = cv2.initUndistortRectifyMap(calibration["camera_matrix"],
-                                               calibration["dist_coeffs"],
-                                               None,
-                                               calibration["new_camera_matrix"],
-                                               (width, height),
-                                               5)
-    camera = cv2.VideoCapture(device)
-    if not camera.isOpened():
-        raise RuntimeError("Camera device %s not found." % device)
-    camera.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    camera.set(cv2.CAP_PROP_FPS, 20) # high frame rate is not necessary here
-    detector = ColorMaskDetector()
-    backprojector = RANSACBackProjector()
-    while True:
-        try:
-            average = np.zeros((height, width, 3), dtype=np.float32)
-            for i in range(3):
-                ret, frame = camera.read()
-                cv2.accumulate(frame, average)
-            average = (average/3.0).astype(np.uint8)
-            image = cv2.remap(average, map_x, map_y, cv2.INTER_LINEAR)
-            image_points, mask = detector.detect(image)
-            object_points = backprojector.back_project(image_points, 0)
-            if show:
-                for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
-                    cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
-                    text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
-                    cv2.putText(image, text, (img_x + 5, img_y - 5),
-                                cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
-                cv2.imshow("%s: analysis feed" % device, image)
-                cv2.imshow("%s: color mask" % device, mask)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-            yield object_points
-        except (KeyboardInterrupt, SystemExit):
-            break
-    camera.release()
+class CalibratedCamera(object):
+
+    def __init__(self, device, calibration_file, n_frames=5):
+        self.device = device
+        self.n_frames = n_frames
+        self.calibration = np.load(calibration_file)
+        self.height = self.calibration["height"]
+        self.width = self.calibration["width"]
+        self.map_x, self.map_y = cv2.initUndistortRectifyMap(
+                                                    self.calibration["camera_matrix"],
+                                                    self.calibration["dist_coeffs"],
+                                                    None,
+                                                    self.calibration["new_camera_matrix"],
+                                                    (self.width, self.height),
+                                                    5)
+        self.camera = cv2.VideoCapture(device)
+        if not self.camera.isOpened():
+            raise RuntimeError("Camera device %s not found." % device)
+        self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+        self.camera.set(cv2.CAP_PROP_FPS, 20)
+
+    def capture_single(self):
+        average = np.zeros((self.height, self.width, 3), dtype=np.float32)
+        for i in range(self.n_frames):
+            ret, frame = self.camera.read()
+            cv2.accumulate(frame, average)
+        average = (average/float(self.n_frames)).astype(np.uint8)
+        image = cv2.remap(average, self.map_x, self.map_y, cv2.INTER_LINEAR)
+        return image
+
+    def capture(self):
+        while True:
+            try:
+                yield self.capture_single()
+            except (KeyboardInterrupt, SystemExit):
+                return
+
+    def __del__(self):
+        self.camera.release()
+
+def watch(camera, detector, projector, show=False):
+    for image in camera.capture():
+        image_points, mask = detector.detect(image)
+        object_points = projector.project(image_points, 0)
+        if show:
+            for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
+                cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
+                text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
+                cv2.putText(image, text, (img_x + 5, img_y - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
+            cv2.imshow("%s: analysis feed" % device, image)
+            cv2.imshow("%s: color mask" % device, mask)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        yield object_points
+
+def check_once(camera, detector, projector, show=False):
+    image = camera.capture_single()
+    image_points, mask = detector.detect(image)
+    object_points = projector.project(image_points, 0)
+    return object_points
 
 def watch_picam(calibration_file, show=False):
     if "picamera" not in sys.modules:
         import picamera
         import picamera.array
     detector = ColorMaskDetector()
-    backprojector = RANSACBackProjector()
+    projector = RANSACprojector()
     with picamera.PiCamera(
         sensor_mode=4, # 1640x1232 with binning,
         framerate=10) as camera:
@@ -151,7 +170,7 @@ def watch_picam(calibration_file, show=False):
             for frame in camera.capture_continuous(stream, format="bgr", use_video_port=True):
                 image = stream.array
                 image_points, mask = detector.detect(image)
-                object_points = backprojector.back_project(image_points, 0)
+                object_points = projector.project(image_points, 0)
                 if show:
                     for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
                         cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
@@ -182,6 +201,9 @@ if __name__ == "__main__":
             if object_points.size:
                 print(object_points)
     else:
-       for object_points in watch_cv(args.device, args.calibration_file, args.show):
+        camera = CalibratedCamera(args.device, args.calibration_file)
+        detector = ColorMaskDetector()
+        projector = RANSACprojector()
+        for object_points in watch(camera, args.show):
             if object_points.size:
                 print(object_points)
