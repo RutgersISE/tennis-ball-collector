@@ -89,6 +89,17 @@ class ColorMaskDetector(object):
         image_points = self.get_coords(mask)
         return image_points, mask
 
+class ColorMaskLocater(object):
+
+    def __init__(self):
+        self.detector = ColorMaskDetector()
+        self.projector = RANSACProjector()
+
+    def locate(self, image):
+        image_points = self.detector.detect(image)
+        object_points = self.projector.project(object_points)
+        return object_points
+
 class CalibratedCamera(object):
 
     def __init__(self, device, calibration_file, fps=40, n_frames=5):
