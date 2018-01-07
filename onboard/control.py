@@ -25,23 +25,35 @@ class ArduinoCommander(object):
         self.serial = Serial(self.port, self.baud, timeout=None)
         time.sleep(2)
 
-    def command(self, left_speed, right_speed):
+    def _send(self, left_speed, right_speed):
         left_speed, right_speed = int(left_speed), int(right_speed)
         message = "%d %d\r\n" % (left_speed, right_speed)
         self.serial.flush()
         self.serial.write(message.encode())
 
+    def command(self, left_speed, right_speed, move_time=None):
+        self._send(left_speed, right_speed)
+        if move_time is not None:
+            time.sleep(move_time)
+            self._send(0, 0)
+
 class PointAndShootPlanner(object):
 
-    def __init__(self, speed=50, turn_scaling=110, forward_scaling=115):
+    def __init__(self, speed=80, turn_scaling=110, forward_scaling=113):
         self.speed = speed
         self.turn_scaling = turn_scaling
         self.forward_scaling = forward_scaling
         self.curr_left_speed = self.curr_right_speed = 0
 
+    def _select_target(self, object_points):
+        dist = np.sum(np.power(object_points, 2), axis=1)
+        target_idx = np.argmin(dist)
+        disp_x, disp_y = object_points[target_idx]
+        return disp_x, disp_y
+
     def _compute_turn(self, disp_x, disp_y):
         disp_phi = np.arctan2(disp_y, disp_x) - np.pi/2
-        if np.isclose(disp_phi, 0, atol=1e-1):
+        if np.isclose(disp_phi, 0, atol=1.5e-1):
             return 0, 0, 0
         elif disp_phi > 0:
             direction = np.array([-1, 1])
@@ -60,11 +72,17 @@ class PointAndShootPlanner(object):
         move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
         return left_speed, right_speed, move_time
 
-    def plan(self, disp_x, disp_y):
+    def plan(self, object_points, max_move_time=.1):
+        disp_x, disp_y = self._select_target(object_points)
         left_speed, right_speed, move_time = self._compute_turn(disp_x, disp_y)
-        yield left_speed, right_speed, move_time
+        if move_time != 0:
+            move_time = min(move_time, max_move_time)
+            return left_speed, right_speed, move_time
         left_speed, right_speed, move_time = self._compute_forward(disp_x, disp_y)
-        yield left_speed, right_speed, move_time
+        if move_time != 0:
+            move_time = min(move_time, max_move_time)
+            return left_speed, right_speed, move_time
+        return 0, 0, 0
 
 def move(port, baud):
     controller = ArduinoController(port, baud)
@@ -89,7 +107,7 @@ if __name__ == "__main__":
     planner = PointAndShootPlanner()
     while True:
         try:
-            raw_instructions = input("robot: ")
+            raw_instructions = input("tbc: ")
             if "exit" in raw_instructions:
                 break
             command_level, arg_1, arg_2 = raw_instructions.split()

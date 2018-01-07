@@ -163,6 +163,30 @@ def localize_once(camera, detector, projector, show=False):
     object_points = projector.project(image_points, 0)
     return object_points
 
+class CalibratedPicamera(object):
+
+    def __init__(self, calibration_file):
+        if "picamera" not in sys.modules:
+            import picamera
+            import picamera.array
+        self.calibration = np.load(calibration_file)
+        self.height = self.calibration["height"]
+        self.width = self.calibration["width"]
+        self.map_x, self.map_y = cv2.initUndistortRectifyMap(
+                                                    self.calibration["camera_matrix"],
+                                                    self.calibration["dist_coeffs"],
+                                                    None,
+                                                    self.calibration["new_camera_matrix"],
+                                                    (self.width, self.height),
+                                                    5)
+        self.camera = picamera.PiCamera(sensor_mode=4, framerate=10)
+        self.camera.resolution = (self.width, self.height)
+        self.camera.video_stabilization = True
+        self.camera.vflip = True
+        self.camera.hflip = True
+        time.sleep(2)
+        self.stream = picamera.array.PiRGBArray(self.camera, size=self.camera.resolution)
+
 def watch_picam(calibration_file, show=False):
     if "picamera" not in sys.modules:
         import picamera
