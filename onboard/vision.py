@@ -97,7 +97,7 @@ class ColorMaskLocater(object):
 
     def locate(self, image):
         image_points = self.detector.detect(image)
-        object_points = self.projector.project(object_points)
+        object_points = self.projector.project(image_points, 0)
         return object_points
 
 class CalibratedCamera(object):
