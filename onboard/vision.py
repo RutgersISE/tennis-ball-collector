@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import time
+import threading
 
 CURRDIR = os.path.dirname(__file__)
 CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
@@ -91,28 +92,43 @@ class ColorMaskDetector(object):
 
 class ColorMaskLocater(object):
 
-    def __init__(self):
+    def __init__(self, camera):
+        self.camera = camera
         self.detector = ColorMaskDetector()
         self.projector = RANSACProjector()
+        self.lock = threading.Lock()
+        self.object_points = None
+        self.stop_thread = False
+        self.watch_thread = threading.Thread(target=self._watch)
+        self.watch_thread.start()
+        time.sleep(2)
 
-    def locate(self, image, show=False):
-        image_points, mask = self.detector.detect(image)
-        object_points = self.projector.project(image_points, 0)
-        if show:
-            for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
-                cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
-                text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
-                cv2.putText(image, text, (img_x + 5, img_y - 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
-            cv2.imshow("camera: analysis feed", image)
-            cv2.imshow("camera: color mask", mask)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                raise KeyboardInterrupt()
+    def _watch(self):
+        for image in self.camera.capture():
+            image_points, _ = self.detector.detect(image)
+            object_points = self.projector.project(image_points, 0)
+            self.lock.acquire()
+            self.object_points = object_points
+            if self.stop_thread:
+                self.lock.release()
+                return
+            self.lock.release()
+
+    def locate(self):
+        self.lock.acquire()
+        object_points = self.object_points.copy()
+        self.lock.release()
         return object_points
+
+    def stop(self):
+        self.lock.acquire()
+        self.stop_thread = True
+        self.lock.release()
+        self.watch_thread.join()
 
 class CalibratedCamera(object):
 
-    def __init__(self, device, calibration_file, fps=40, n_frames=5):
+    def __init__(self, device, calibration_file, fps=20, n_frames=2):
         self.device = device
         self.n_frames = n_frames
         self.calibration = np.load(calibration_file)

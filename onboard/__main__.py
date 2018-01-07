@@ -1,8 +1,11 @@
+#!/usr/bin/env python3
+
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 from argparse import ArgumentParser
+import sys, time
 
 from vision import CalibratedCamera, ColorMaskLocater
 from control import ArduinoCommander, PointAndShootPlanner
@@ -25,21 +28,23 @@ camera = CalibratedCamera(args.device, args.calibration_file)
 logger.info("initializing onboard commander")
 commander = ArduinoCommander(args.port, args.baud)
 logger.info("initializing target locater")
-locater = ColorMaskLocater()
+locater = ColorMaskLocater(camera)
 logger.info("initializing motion planner")
 planner = PointAndShootPlanner()
 
 logger.info("beginning image capture")
-for image in camera.capture():
+while True:
     try:
-        object_points = locater.locate(image, True)
+        object_points = locater.locate()
         if not object_points.size:
             commander.command(0, 0)
             continue
-        logger.info("%d targets detected" % object_points.shape[0])
-        left_speed, right_speed, _ = planner.plan(object_points)
-        logger.info("moving with speed (%s, %s)" % (left_speed, right_speed))
-        commander.command(left_speed, right_speed)
+        logger.info("locater found %d targets" % object_points.shape[0])
+        left_speed, right_speed, move_time = planner.plan(object_points)
+        logger.info("requesting move with speed (%s, %s)" % (left_speed, right_speed))
+        commander.command(left_speed, right_speed, move_time)
     except (KeyboardInterrupt, SystemExit):
+        logger.info("shutting down")
         commander.command(0, 0)
+        locater.stop()
         break

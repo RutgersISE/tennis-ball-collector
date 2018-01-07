@@ -35,11 +35,11 @@ class ArduinoCommander(object):
         self._send(left_speed, right_speed)
         if move_time is not None:
             time.sleep(move_time)
-            self._send(0, 0)
+#            self._send(0, 0)
 
 class PointAndShootPlanner(object):
 
-    def __init__(self, speed=80, turn_scaling=110, forward_scaling=113):
+    def __init__(self, speed=60, turn_scaling=110, forward_scaling=113):
         self.speed = speed
         self.turn_scaling = turn_scaling
         self.forward_scaling = forward_scaling
@@ -72,7 +72,7 @@ class PointAndShootPlanner(object):
         move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
         return left_speed, right_speed, move_time
 
-    def plan(self, object_points, max_move_time=.1):
+    def plan(self, object_points, max_move_time=.25):
         disp_x, disp_y = self._select_target(object_points)
         left_speed, right_speed, move_time = self._compute_turn(disp_x, disp_y)
         if move_time != 0:
@@ -83,14 +83,6 @@ class PointAndShootPlanner(object):
             move_time = min(move_time, max_move_time)
             return left_speed, right_speed, move_time
         return 0, 0, 0
-
-def move(port, baud):
-    controller = ArduinoController(port, baud)
-    planner = PointAndShootPlanner()
-    while True:
-        object_points = yield # they're called coroutines and I just learned about them too
-        left_speed, right_speed = planner.plan(object_points)
-        controller.control(left_speed, right_speed)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -115,12 +107,11 @@ if __name__ == "__main__":
                 left_speed, right_speed = arg_1, arg_2
                 commander.command(left_speed, right_speed)
             elif "point" in command_level:
-                disp_x, disp_y = float(arg_1), float(arg_2)
-                for left_speed, right_speed, move_time in planner.plan(disp_x, disp_y):
+                object_points = np.array([[float(arg_1), float(arg_2)]])
+                for left_speed, right_speed, move_time in planner.plan(object_points, np.inf):
                     if move_time == 0:
                         continue
-                    commander.command(left_speed, right_speed)
-                    time.sleep(move_time)
+                    commander.command(left_speed, right_speed, move_time)
                 commander.command(0, 0)
         except KeyboardInterrupt:
             break
