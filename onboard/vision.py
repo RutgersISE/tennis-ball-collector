@@ -91,7 +91,7 @@ class ColorMaskDetector(object):
 
 class CalibratedCamera(object):
 
-    def __init__(self, device, calibration_file, n_frames=5):
+    def __init__(self, device, calibration_file, fps=40, n_frames=5):
         self.device = device
         self.n_frames = n_frames
         self.calibration = np.load(calibration_file)
@@ -109,7 +109,7 @@ class CalibratedCamera(object):
             raise RuntimeError("Camera device %s not found." % device)
         self.camera.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
         self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-        self.camera.set(cv2.CAP_PROP_FPS, 20)
+        self.camera.set(cv2.CAP_PROP_FPS, fps)
 
     def capture_single(self):
         average = np.zeros((self.height, self.width, 3), dtype=np.float32)
@@ -140,13 +140,13 @@ def watch(camera, detector, projector, show=False):
                 text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
                 cv2.putText(image, text, (img_x + 5, img_y - 5),
                             cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
-            cv2.imshow("%s: analysis feed" % device, image)
-            cv2.imshow("%s: color mask" % device, mask)
+            cv2.imshow("camera: analysis feed", image)
+            cv2.imshow("camera: color mask", mask)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         yield object_points
 
-def check_once(camera, detector, projector, show=False):
+def localize_once(camera, detector, projector, show=False):
     image = camera.capture_single()
     image_points, mask = detector.detect(image)
     object_points = projector.project(image_points, 0)
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     else:
         camera = CalibratedCamera(args.device, args.calibration_file)
         detector = ColorMaskDetector()
-        projector = RANSACprojector()
-        for object_points in watch(camera, args.show):
+        projector = RANSACProjector()
+        for object_points in watch(camera, detector, projector, args.show):
             if object_points.size:
                 print(object_points)
