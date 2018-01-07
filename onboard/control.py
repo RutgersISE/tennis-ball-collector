@@ -43,7 +43,7 @@ class PointAndShootPlanner(object):
         disp_phi = np.arctan2(disp_y, disp_x) - np.pi/2
         if np.isclose(disp_phi, 0, atol=1e-1):
             return 0, 0, 0
-        elif disp_phi < 0:
+        elif disp_phi > 0:
             direction = np.array([-1, 1])
         else:
             direction = np.array([1, -1])
@@ -63,9 +63,7 @@ class PointAndShootPlanner(object):
     def plan(self, disp_x, disp_y):
         left_speed, right_speed, move_time = self._compute_turn(disp_x, disp_y)
         yield left_speed, right_speed, move_time
-        print(left_speed, right_speed, move_time)
         left_speed, right_speed, move_time = self._compute_forward(disp_x, disp_y)
-        print(left_speed, right_speed, move_time)
         yield left_speed, right_speed, move_time
 
 def move(port, baud):
