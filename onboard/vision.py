@@ -95,9 +95,19 @@ class ColorMaskLocater(object):
         self.detector = ColorMaskDetector()
         self.projector = RANSACProjector()
 
-    def locate(self, image):
-        image_points = self.detector.detect(image)
+    def locate(self, image, show=False):
+        image_points, mask = self.detector.detect(image)
         object_points = self.projector.project(image_points, 0)
+        if show:
+            for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
+                cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
+                text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
+                cv2.putText(image, text, (img_x + 5, img_y - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
+            cv2.imshow("camera: analysis feed", image)
+            cv2.imshow("camera: color mask", mask)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                raise KeyboardInterrupt()
         return object_points
 
 class CalibratedCamera(object):
@@ -162,30 +172,6 @@ def localize_once(camera, detector, projector, show=False):
     image_points, mask = detector.detect(image)
     object_points = projector.project(image_points, 0)
     return object_points
-
-class CalibratedPicamera(object):
-
-    def __init__(self, calibration_file):
-        if "picamera" not in sys.modules:
-            import picamera
-            import picamera.array
-        self.calibration = np.load(calibration_file)
-        self.height = self.calibration["height"]
-        self.width = self.calibration["width"]
-        self.map_x, self.map_y = cv2.initUndistortRectifyMap(
-                                                    self.calibration["camera_matrix"],
-                                                    self.calibration["dist_coeffs"],
-                                                    None,
-                                                    self.calibration["new_camera_matrix"],
-                                                    (self.width, self.height),
-                                                    5)
-        self.camera = picamera.PiCamera(sensor_mode=4, framerate=10)
-        self.camera.resolution = (self.width, self.height)
-        self.camera.video_stabilization = True
-        self.camera.vflip = True
-        self.camera.hflip = True
-        time.sleep(2)
-        self.stream = picamera.array.PiRGBArray(self.camera, size=self.camera.resolution)
 
 def watch_picam(calibration_file, show=False):
     if "picamera" not in sys.modules:
