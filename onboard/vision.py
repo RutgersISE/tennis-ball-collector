@@ -13,6 +13,10 @@ import os
 import sys
 import time
 import threading
+import requests
+if True:
+    import picamera
+    import picamera.array
 
 CURRDIR = os.path.dirname(__file__)
 CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
@@ -167,6 +171,45 @@ class CalibratedCamera(object):
     def __del__(self):
         self.camera.release()
 
+class CalibratedPicamera(object):
+
+    def __init__(self, calibration_file, fps=20, n_frames=2):
+        self.n_frames = n_frames
+        self.calibration = np.load(calibration_file)
+        self.height = self.calibration["height"]
+        self.width = self.calibration["width"]
+        self.map_x, self.map_y = cv2.initUndistortRectifyMap(
+                                                    self.calibration["camera_matrix"],
+                                                    self.calibration["dist_coeffs"],
+                                                    None,
+                                                    self.calibration["new_camera_matrix"],
+                                                    (self.width, self.height),
+                                                    5)
+        self.camera = picamera.PiCamera(sensor_mode=4, framerate=4)
+        self.camera.resolution = (640, 368)
+        self.camera.video_stabilization = True
+        self.camera.vflip = True
+        self.camera.hflip = True
+        time.sleep(2)
+
+    def capture(self):
+        with picamera.array.PiRGBArray(self.camera, size=self.camera.resolution) as stream:
+            for frame in self.camera.capture_continuous(stream, format="bgr", use_video_port=True):
+                try:
+                    image = stream.array
+                    image = cv2.remap(image, self.map_x, self.map_y, cv2.INTER_LINEAR)
+                    yield image
+                    stream.truncate(0)
+                except (KeyboardInterrupt, SystemExit):
+                    return
+
+    def capture_single(self):
+        raise NotImplementedError()
+
+    def __del__(self):
+        self.camera.close()
+
+
 def watch(camera, detector, projector, show=False):
     for image in camera.capture():
         image_points, mask = detector.detect(image)
@@ -183,43 +226,11 @@ def watch(camera, detector, projector, show=False):
                 break
         yield object_points
 
-def localize_once(camera, detector, projector, show=False):
-    image = camera.capture_single()
-    image_points, mask = detector.detect(image)
-    object_points = projector.project(image_points, 0)
-    return object_points
-
-def watch_picam(calibration_file, show=False):
-    if "picamera" not in sys.modules:
-        import picamera
-        import picamera.array
-    detector = ColorMaskDetector()
-    projector = RANSACprojector()
-    with picamera.PiCamera(
-        sensor_mode=4, # 1640x1232 with binning,
-        framerate=10) as camera:
-        camera.resolution = (640, 368)
-        camera.video_stabilization = True
-        camera.vflip = True
-        camera.hflip = True
-        time.sleep(2)
-        with picamera.array.PiRGBArray(camera, size=camera.resolution) as stream:
-            for frame in camera.capture_continuous(stream, format="bgr", use_video_port=True):
-                image = stream.array
-                image_points, mask = detector.detect(image)
-                object_points = projector.project(image_points, 0)
-                if show:
-                    for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
-                        cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
-                        text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
-                        cv2.putText(image, text, (img_x + 5, img_y - 5),
-                                    cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
-                    cv2.imshow("picam: analysis feed", image)
-                    cv2.imshow("picam: color mask", mask)
-                    if cv2.waitKey(1) & 0xFF == ord('q'):
-                        break
-                stream.truncate(0)
-                yield object_points
+def send(object_points, session, address):
+    seen_at = time.time()
+    json = [dict(rel_x=x, rel_y=y, seen_at=seen_at) for x, y in object_points]
+    print(json)
+    session.post(address, json=json)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -230,17 +241,21 @@ if __name__ == "__main__":
     parser.add_argument("--calibration_file",
                         help="calibration for camera",
                         default=CALIBRATION_FILE)
+    parser.add_argument("--address",
+                        help="address of localization server",
+                        default="http://localhost:8080")
     parser.add_argument("--picam", action="store_true")
     parser.add_argument("--show", action="store_true")
+    parser.add_argument("--send", action="store_true")
     args = parser.parse_args()
+
     if args.picam:
-        for object_points in watch_picam(args.calibration_file, args.show):
-            if object_points.size:
-                print(object_points)
+        camera = CalibratedPicamera(args.calibration_file)
     else:
         camera = CalibratedCamera(args.device, args.calibration_file)
-        detector = ColorMaskDetector()
-        projector = RANSACProjector()
-        for object_points in watch(camera, detector, projector, args.show):
-            if object_points.size:
-                print(object_points)
+    detector = ColorMaskDetector()
+    projector = RANSACProjector()
+    session = requests.Session()
+    for object_points in watch(camera, detector, projector, args.show):
+        if object_points.size and args.send:
+            send(object_points, session, args.address)

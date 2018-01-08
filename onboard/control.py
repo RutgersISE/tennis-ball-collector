@@ -91,7 +91,7 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Listen for commands to execute on robot.")
     parser.add_argument("--port",  dest="port", type=str, default="/dev/ttyACM0",
                         help="port address of motor controller.")
-    parser.add_argument("--baud", dest="baud", type=int, default=9600,
+    parser.add_argument("--baud", dest="baud", type=int, default=38400,
                         help="baud rate of motor controller.")
     args = parser.parse_args()
 

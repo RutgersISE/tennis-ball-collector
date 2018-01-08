@@ -16,6 +16,11 @@ with sqlite3.connect(database) as conn:
         );""")
     conn.commit()
 
+@app.route("/test", methods=["POST"])
+def respond_test():
+    print(request.json)
+    return "OK"
+
 @app.route("/balls", methods=["POST"])
 def respond_balls():
     balls = request.json
@@ -31,3 +36,6 @@ def respond_balls():
             );""", balls)
         conn.commit()
     return "OK"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", threaded=True, port=8080)
