@@ -11,6 +11,8 @@ import sys
 import time
 from math import atan, sqrt, pow
 import numpy as np
+import zmq
+import json
 
 def cart2pol(x, y):
     rho = np.sqrt(x**2 + y**2)
@@ -84,6 +86,21 @@ class PointAndShootPlanner(object):
             return left_speed, right_speed, move_time
         return 0, 0, 0
 
+class ZMQSubscriber(object):
+
+    def __init__(self, address):
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.SUB)
+        self.socket.setsockopt_string(zmq.SUBSCRIBE, "rel_discovery")
+        self.address = address
+
+    def request(self):
+        self.socket.connect(self.address)
+        string = self.socket.recv_string()
+        topic, timestamp, message_data = string.split(" ", 2)
+        points = np.array(json.loads(message_data))
+        return points
+
 if __name__ == "__main__":
     from argparse import ArgumentParser
     import sys
@@ -93,8 +110,11 @@ if __name__ == "__main__":
                         help="port address of motor controller.")
     parser.add_argument("--baud", dest="baud", type=int, default=38400,
                         help="baud rate of motor controller.")
+    parser.add_argument("--address", dest="address", type=str,
+                        default="tcp://localhost:5556",
+                        help="address of pub-sub network")
     args = parser.parse_args()
-
+    """
     commander = ArduinoCommander(args.port, args.baud)
     planner = PointAndShootPlanner()
     while True:
@@ -116,3 +136,8 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             break
     commander.command(0, 0)
+    """
+
+    client = ZMQSubscriber(args.address)
+    while True:
+        print(client.request())

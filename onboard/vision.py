@@ -14,10 +14,12 @@ import sys
 import time
 import threading
 import requests
-if True:
+import zmq
+try:
     import picamera
     import picamera.array
-
+except ImportError:
+    pass
 CURRDIR = os.path.dirname(__file__)
 CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
 PROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
@@ -209,6 +211,25 @@ class CalibratedPicamera(object):
     def __del__(self):
         self.camera.close()
 
+class ZMQPublisher(object):
+
+    def __init__(self, address):
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.PUB)
+        self.socket.bind(address)
+
+    def send(self, object_points):
+        seen_at = time.time()
+        message = json.dumps([(x, y, ) for x, y in object_points])
+        self.socket.send_string("rel_discovery %s %s" % (time.time(), message))
+
+class TerminalClient(object):
+
+    def __init__(self):
+        pass
+
+    def send(self, object_points):
+        print("%s ball(s) found." % object_points.shape[0])
 
 def watch(camera, detector, projector, show=False):
     for image in camera.capture():
@@ -224,13 +245,22 @@ def watch(camera, detector, projector, show=False):
             cv2.imshow("camera: color mask", mask)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        yield object_points
+        if object_points.size:
+            yield object_points
 
-def send(object_points, session, address):
-    seen_at = time.time()
-    json = [dict(rel_x=x, rel_y=y, seen_at=seen_at) for x, y in object_points]
-    print(json)
-    session.post(address, json=json)
+def main(args):
+    if args.picam:
+        camera = CalibratedPicamera(args.calibration_file)
+    else:
+        camera = CalibratedCamera(args.device, args.calibration_file)
+    detector = ColorMaskDetector()
+    projector = RANSACProjector()
+    if args.send:
+        client = ZMQPublisher(args.address)
+    else:
+        client = TerminalClient()
+    for object_points in watch(camera, detector, projector, args.show):
+        client.send(object_points)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -249,13 +279,4 @@ if __name__ == "__main__":
     parser.add_argument("--send", action="store_true")
     args = parser.parse_args()
 
-    if args.picam:
-        camera = CalibratedPicamera(args.calibration_file)
-    else:
-        camera = CalibratedCamera(args.device, args.calibration_file)
-    detector = ColorMaskDetector()
-    projector = RANSACProjector()
-    session = requests.Session()
-    for object_points in watch(camera, detector, projector, args.show):
-        if object_points.size and args.send:
-            send(object_points, session, args.address)
+    main(args)

@@ -30,13 +30,12 @@ int parse(int* left_rpm, int* right_rpm) {
     i++;
     tok = strtok(0, " ");
   }
-  // success requires that only 4 tokens were found
   return size;
 }
 
 void setup() {
-  Serial.begin(9600);
-  Serial.setTimeout(5); // lowers serial latency
+  Serial.begin(38400);
+  Serial.setTimeout(2); // lowers serial latency
 }
 
 int left_rpm = 0;
