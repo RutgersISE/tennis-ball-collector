@@ -4,18 +4,23 @@ import ast
 
 class Subscriber(object):
 
-    def __init__(self, topic, port, host="localhost"):
+    def __init__(self, topic, port, timeout=None, host="localhost"):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.SUB)
         self.socket.setsockopt_string(zmq.SUBSCRIBE, topic)
         self.address = "tcp://%s:%s" % (host, port)
+        if timeout is not None:
+            self.socket.RCVTIMEO = timeout
 
     def listen(self):
-        self.socket.connect(self.address)
-        message_string = self.socket.recv_string()
-        topic, timestamp, message_data = message_string.split(" ", 2)
-        message = ast.literal_eval(message_data)
-        return message
+        try:
+            self.socket.connect(self.address)
+            message_string = self.socket.recv_string()
+            topic, timestamp, message_data = message_string.split(" ", 2)
+            message = ast.literal_eval(message_data)
+            return message
+        except zmq.error.Again:
+            return None
 
 class Publisher(object):
 
