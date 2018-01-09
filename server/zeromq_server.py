@@ -1,13 +1,13 @@
 import sys
 import zmq
 
-port = "5556"
+port = "5557"
 # Socket to talk to server
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
 socket.connect("tcp://localhost:%s" % port)
 
-topic_filter = "rel_discovery"
+topic_filter = "position_rel"
 socket.setsockopt_string(zmq.SUBSCRIBE, topic_filter)
 
 # Process 5 updates
