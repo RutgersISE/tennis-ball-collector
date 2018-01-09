@@ -62,7 +62,7 @@ class CalibratedCamera(object):
 
 class CalibratedPicamera(object):
 
-    def __init__(self, calibration_file, fps=20, n_frames=2):
+    def __init__(self, calibration_file=CALIBRATION_FILE, fps=20, n_frames=2):
         self.n_frames = n_frames
         self.calibration = np.load(calibration_file)
         self.height = self.calibration["height"]
