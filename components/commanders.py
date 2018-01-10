@@ -23,10 +23,12 @@ class ArduinoCommander(object):
         self.serial.flush()
         self.serial.write(message.encode())
 
-    def command(self, left_speed, right_speed, move_time=None):
+    def command(self, left_speed, right_speed, move_time=None, stop=False):
         self._send(left_speed, right_speed)
         if move_time is not None:
             time.sleep(move_time)
+        if stop:
+            self._send(0, 0)
 
 class DummyCommander(object):
 

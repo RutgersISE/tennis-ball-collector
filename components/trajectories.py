@@ -31,7 +31,7 @@ class PointAndShootTrajector(object):
     def _compute_turn(self, disp_x, disp_y, max_move_time=.25):
         disp_phi = np.arctan2(disp_y, disp_x) - np.pi/2
         if np.isclose(disp_phi, 0, atol=2.5e-1):
-            return 0, 0, 0, 0, 0
+            return 0, 0, 0, 0, 0, True
         elif disp_phi > 0:
             direction = np.array([-1, 1])
         else:
@@ -40,24 +40,24 @@ class PointAndShootTrajector(object):
         move_time = np.abs(disp_phi)/self.speed*self.turn_scaling
         move_time = min(move_time, max_move_time)
         disp_phi *= move_time/float(max_move_time)
-        return left_speed, right_speed, move_time, 0, disp_phi
+        return left_speed, right_speed, move_time, 0, disp_phi, move_time < max_move_time
 
     def _compute_forward(self, disp_x, disp_y, max_move_time=.25):
         disp_rho = np.sqrt(disp_x**2 + disp_y**2)
         if np.isclose(disp_rho, 0, atol=1e-2):
-             return 0, 0, 0, 0, 0
+             return 0, 0, 0, 0, 0, True
         direction = np.array([1, 1])
         left_speed, right_speed = self.speed*direction
         move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
         move_time = min(move_time, max_move_time)
         disp_rho *= move_time/float(max_move_time)
-        return left_speed, right_speed, move_time, disp_rho, 0
+        return left_speed, right_speed, move_time, disp_rho, 0, move_time < max_move_time
 
     def traject(self, disp_x, disp_y, max_move_time=.25):
-        left_speed, right_speed, move_time, disp_rho, disp_phi = self._compute_turn(disp_x, disp_y, max_move_time)
+        left_speed, right_speed, move_time, disp_rho, stop = self._compute_turn(disp_x, disp_y, max_move_time)
         if move_time != 0:
-            return left_speed, right_speed, move_time, disp_rho, disp_phi 
-        left_speed, right_speed, move_time, disp_rho, disp_phi = self._compute_forward(disp_x, disp_y, max_move_time)
+            return left_speed, right_speed, move_time, disp_rho, disp_phi, stop
+        left_speed, right_speed, move_time, disp_rho, disp_phi, stop = self._compute_forward(disp_x, disp_y, max_move_time)
         if move_time != 0:
-            return left_speed, right_speed, move_time, disp_rho, disp_phi
-        return 0, 0, 0, 0, 0
+            return left_speed, right_speed, move_time, disp_rho, disp_phi, stop
+        return 0, 0, 0, 0, 0, True

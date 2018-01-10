@@ -94,7 +94,7 @@ class ColorMaskLocater(object):
         self.detector = ColorMaskDetector()
         self.projector = RANSACProjector()
 
-    def locate(self, show=False):
+    def locate_all(self, show=False):
         for image in self.camera.capture():
             image_points, mask = self.detector.detect(image)
             object_points = self.projector.project(image_points, 0)
@@ -110,3 +110,10 @@ class ColorMaskLocater(object):
                     break
             if object_points.size:
                 yield list(map(tuple, object_points))
+
+    def locate_nearest(self, show=False):
+        for object_points in self.locate_all(show):
+            dist = np.sum(np.power(object_points, 2), axis=1)
+            nearest_idx = np.argmin(dist)
+            nearest = object_points[nearest_idx]
+            yield nearest
