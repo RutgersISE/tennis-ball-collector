@@ -13,8 +13,8 @@ class RandomSearcher(object):
         rel_y = self.next_y - self.curr_y
         disp_rho = np.sqrt(rel_x**2 + rel_y**2)
         disp_phi = np.atan2(x, y) - self.curr_phi
-        disp_x = rho*sin(phi)
-        disp_y = rho*cos(phi)
+        disp_x = rho*np.sin(phi)
+        disp_y = rho*np.cos(phi)
         return disp_x, disp_y
 
     def update(self, disp_rho, disp_phi):

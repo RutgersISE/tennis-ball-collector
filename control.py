@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--sub_port", dest="sub_port", default="5556", type=str,
                         help="Port for subscribing. Defaults to '5556'.")
     parser.add_argument("--pub_port", dest="pub_port", default="5558", type=str,
-                        help="Port for publinshing. Defaults to '5558'.")
+                        help="Port for publishing. Defaults to '5558'.")
     args = parser.parse_args()
 
     main(args)
