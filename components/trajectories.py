@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Control system for tennis ball collector.
 """
@@ -21,6 +20,8 @@ class PointAndShootTrajector(object):
         self.turn_scaling = turn_scaling
         self.forward_scaling = forward_scaling
         self.curr_left_speed = self.curr_right_speed = 0
+        self.jaw_angle = 36/(2*np.pi) #TODO better for a config file
+        self.jaw_length = 2 
 
     def _select_target(self, object_points):
         dist = np.sum(np.power(object_points, 2), axis=1)
@@ -28,8 +29,7 @@ class PointAndShootTrajector(object):
         disp_x, disp_y = object_points[target_idx]
         return disp_x, disp_y
 
-    def _compute_turn(self, disp_x, disp_y, max_move_time=.25):
-        disp_phi = np.arctan2(disp_y, disp_x) - np.pi/2
+    def _compute_turn(self, disp_phi, max_move_time=.25):
         if np.isclose(disp_phi, 0, atol=2.5e-1):
             return 0, 0, 0, 0, 0, True
         elif disp_phi > 0:
@@ -40,10 +40,10 @@ class PointAndShootTrajector(object):
         move_time = np.abs(disp_phi)/self.speed*self.turn_scaling
         move_time = min(move_time, max_move_time)
         disp_phi *= move_time/float(max_move_time)
-        return left_speed, right_speed, move_time, 0, disp_phi, move_time < max_move_time
+        stop = move_time < max_move_time
+        return left_speed, right_speed, move_time, 0, disp_phi, stop
 
-    def _compute_forward(self, disp_x, disp_y, max_move_time=.25):
-        disp_rho = np.sqrt(disp_x**2 + disp_y**2)
+    def _compute_forward(self, disp_rho, max_move_time=.25):
         if np.isclose(disp_rho, 0, atol=1e-2):
              return 0, 0, 0, 0, 0, True
         direction = np.array([1, 1])
@@ -51,13 +51,16 @@ class PointAndShootTrajector(object):
         move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
         move_time = min(move_time, max_move_time)
         disp_rho *= move_time/float(max_move_time)
-        return left_speed, right_speed, move_time, disp_rho, 0, move_time < max_move_time
+        stop = move_time < max_move_time
+        return left_speed, right_speed, move_time, disp_rho, 0, stop
 
     def traject(self, disp_x, disp_y, max_move_time=.25):
-        left_speed, right_speed, move_time, disp_rho, stop = self._compute_turn(disp_x, disp_y, max_move_time)
+        disp_phi = np.arctan2(disp_y, disp_x) - np.pi/2
+        disp_rho = np.sqrt(disp_x**2 + disp_y**2)
+        left_speed, right_speed, move_time, disp_rho, disp_phi, stop = self._compute_turn(disp_phi, max_move_time)
         if move_time != 0:
             return left_speed, right_speed, move_time, disp_rho, disp_phi, stop
-        left_speed, right_speed, move_time, disp_rho, disp_phi, stop = self._compute_forward(disp_x, disp_y, max_move_time)
+        left_speed, right_speed, move_time, disp_rho, disp_phi, stop = self._compute_forward(disp_rho, max_move_time)
         if move_time != 0:
             return left_speed, right_speed, move_time, disp_rho, disp_phi, stop
         return 0, 0, 0, 0, 0, True

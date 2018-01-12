@@ -12,15 +12,15 @@ class RandomSearcher(object):
         rel_x = self.next_x - self.curr_x
         rel_y = self.next_y - self.curr_y
         disp_rho = np.sqrt(rel_x**2 + rel_y**2)
-        disp_phi = np.atan2(x, y) - self.curr_phi
-        disp_x = rho*np.sin(phi)
-        disp_y = rho*np.cos(phi)
+        disp_phi = np.arctan2(rel_x, rel_y) - self.curr_phi
+        disp_x = disp_rho*np.sin(disp_phi)
+        disp_y = disp_rho*np.cos(disp_phi)
         return disp_x, disp_y
 
     def update(self, disp_rho, disp_phi):
         self.curr_phi += disp_phi
-        self.curr_x += disp_rho*np.cos(abs_phi)
-        self.curr_y += disp_rho*np.sin(abs_phi)
+        self.curr_x += disp_rho*np.cos(self.curr_phi)
+        self.curr_y += disp_rho*np.sin(self.curr_phi)
         if np.isclose(self.curr_x, self.next_x, atol=5e-1) and \
             np.isclose(self.curr_y, self.next_y, atol=5e-1):
             self.next_x = np.random.uniform(0, self.box_width)

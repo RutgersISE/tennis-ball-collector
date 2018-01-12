@@ -10,7 +10,7 @@ def main(args):
         for point in locator.locate_nearest(args.show):
             publisher.send(point)
     else:
-        publisher = Publisher("in_view", args.pub_port, args.pub_host)
+        publisher = Publisher("onboard_view", args.pub_port, args.pub_host)
         for points in locator.locate_all(args.show):
             publisher.send(points)
 

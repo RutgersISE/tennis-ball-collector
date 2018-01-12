@@ -24,7 +24,8 @@ if __name__ == "__main__":
 
     parser = ArgumentParser()
     parser.add_argument("--device", dest="device", default="/dev/ttyACM0", type=str,
-                        help="Unix device path for arduino. Defaults to '/dev/ttyACM0'.")
+                        help="""Unix device path for arduino. Defaults to 
+                             '/dev/ttyACM0'.""")
     parser.add_argument("--height", dest="height", default=10, type=int,
                         help="Height of box to constrain robot to. Defaults to '10'.")
     parser.add_argument("--width", dest="width", default=10, type=int,
