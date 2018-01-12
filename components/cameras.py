@@ -17,12 +17,13 @@ except ImportError:
     pass
 
 CURRDIR = os.path.dirname(__file__)
-CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
+LOG_CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
+PI_CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/raspicam_v2_m4_calibration.npz")
 PROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
 
 class CalibratedCamera(object):
 
-    def __init__(self, device, calibration_file=CALIBRATION_FILE, fps=20, n_frames=5):
+    def __init__(self, device, calibration_file=LOG_CALIBRATION_FILE, fps=20, n_frames=5):
         self.device = device
         self.n_frames = n_frames
         self.calibration = np.load(calibration_file)
@@ -63,7 +64,7 @@ class CalibratedCamera(object):
 
 class CalibratedPicamera(object):
 
-    def __init__(self, calibration_file=CALIBRATION_FILE, fps=20, n_frames=2):
+    def __init__(self, device=None, calibration_file=PI_CALIBRATION_FILE, fps=20, n_frames=2):
         self.n_frames = n_frames
         self.calibration = np.load(calibration_file)
         self.height = self.calibration["height"]

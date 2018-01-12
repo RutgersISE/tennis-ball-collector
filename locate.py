@@ -1,9 +1,14 @@
-from components.cameras import CalibratedCamera
+import os
+
 from components.communication import Publisher
 from components.localization import ColorMaskLocater
+if os.uname()[4][:3] == 'arm':
+    from components.cameras import CalibratadPicamera as Camera
+else:
+    from components.cameras import CalibratedCamera as Camera
 
 def main(args):
-    camera = CalibratedCamera(args.device)
+    camera = Camera(args.device)
     locator = ColorMaskLocater(camera)
     if args.nearest:
         publisher = Publisher("target_rel", args.pub_port, args.pub_host)
