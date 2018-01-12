@@ -3,7 +3,7 @@ import os
 from components.communication import Publisher
 from components.localization import ColorMaskLocater
 if os.uname()[4][:3] == 'arm':
-    from components.cameras import CalibratadPicamera as Camera
+    from components.cameras import CalibratedPicamera as Camera
 else:
     from components.cameras import CalibratedCamera as Camera
 
