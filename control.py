@@ -11,7 +11,6 @@ def main(args):
     while True:
         try:
             message = subscriber.listen()
-            print(message)
             if message is None:
                 continue
             else:
