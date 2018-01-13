@@ -38,18 +38,37 @@ void setup() {
   Serial.setTimeout(2); // lowers serial latency
 }
 
+int target_left_rpm = 0;
+int target_right_rpm = 0;
 int left_rpm = 0;
 int right_rpm = 0;
 
 void loop() {
  if (Serial.available()) {
-   int parse_success = parse(&left_rpm, &right_rpm);
+   int parse_success = parse(&target_left_rpm, &target_right_rpm);
    Serial.println(parse_success);
  }
- left_stepper.setSpeed(abs(left_rpm));
- right_stepper.setSpeed(abs(right_rpm));
- for (int i = 0; i < STEPS_PER_READ; i++) {
-  right_stepper.step(-sign(right_rpm));
-  left_stepper.step(sign(left_rpm));
- }
+ if (left_rpm != target_left_rpm) {
+  if (abs(target_left_rpm) > 20 && abs(left_rpm) < 20) {
+    left_rpm = sign(target_left_rpm)*20;
+  } else if (abs(target_left_rpm) <= 20 && abs(left_rpm) < 20) {
+    left_rpm = 0;
+  } else {
+    left_rpm += left_rpm < target_left_rpm ? 1 : -1;
+  }
+  left_stepper.setSpeed(abs(left_rpm));
+ } 
+ if (right_rpm != target_right_rpm) {
+    if (abs(target_right_rpm) > 20 && abs(right_rpm) < 20) {
+    right_rpm = sign(target_right_rpm)*20;
+  } else if (abs(target_right_rpm) <= 20 && abs(right_rpm) < 20) {
+    right_rpm = 0;
+  } else {
+    right_rpm += right_rpm < target_right_rpm ? 1 : -1;
+  }
+  right_stepper.setSpeed(abs(right_rpm));
+ } 
+ right_stepper.step(-sign(right_rpm));
+ left_stepper.step(sign(left_rpm));
+
 }
