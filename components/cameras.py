@@ -19,7 +19,8 @@ except ImportError:
 CURRDIR = os.path.dirname(__file__)
 LOG_CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
 PI_CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/raspicam_v2_m4_calibration.npz")
-PROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
+LOG_PROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
+PI_PROJECTION_FILE = os.path.join(CURRDIR, "runtime/raspicam_v2_m4_backprojection.npz")
 
 class CalibratedCamera(object):
 

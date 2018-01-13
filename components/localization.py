@@ -12,8 +12,9 @@ import json
 import os
 
 CURRDIR = os.path.dirname(__file__)
-CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_calibration.npz")
-PROJECTION_FILE = os.path.join(CURRDIR, "runtime/logitech_480p_backprojection.npz")
+
+CALIBRATION_FILE = os.path.join(CURRDIR, "runtime/raspicam_v2_m4_calibration.npz")
+PROJECTION_FILE = os.path.join(CURRDIR, "runtime/raspicam_v2_m4_backprojection.npz")
 COLORMASK_FILE = os.path.join(CURRDIR, "runtime/tennis_ball_color_mask.json")
 
 class RANSACProjector(object):
@@ -76,14 +77,6 @@ class ColorMaskDetector(object):
 
     def detect(self, image):
         mask = self.make_mask(image)
-        image_points = self.get_coords(mask)
-        return image_points, mask
-
-    def detect_many(self, images):
-        masks = np.stack([self.make_mask(image) for image in images], axis=2)
-        levels = np.mean(masks, axis=2)
-        mask = np.zeros(images[0].shape[0:2], dtype=np.uint8)
-        mask[levels > self.thresh] = 255
         image_points = self.get_coords(mask)
         return image_points, mask
 
