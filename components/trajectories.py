@@ -59,6 +59,10 @@ class PointAndShootTrajector(object):
         move, delta = self._compute_turn(phi, max_move_time)
         if move:
             yield move, delta
+            _, _, _, stop = move
+            if not stop:
+                # if turning move is incomplete, allow vision to check position
+                return
         move, delta = self._compute_forward(rho, max_move_time)
         if move:
             yield move, delta
