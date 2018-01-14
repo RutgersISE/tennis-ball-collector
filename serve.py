@@ -1,9 +1,16 @@
 from components.communication import Server
+from components.trackers import LatestSentTracker
 
 def main(port):
     server = Server(args.port)
-    for request in server.listen(autoreply=True):
+    tracker = LatestSentTracker()
+    for request in server.listen():
         print(request)
+        if request == "send_target":
+            server.reply(tracker.get_target())
+        else:
+            tracker.update(request)
+            server.reply(True)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

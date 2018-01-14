@@ -11,7 +11,7 @@ def main(args):
     camera = Camera(args.device)
     locator = ColorMaskLocater(camera)
     client = Client(args.port, args.host)
-    for points in locator.locate_all(args.show):
+    for points in locator.locate(args.show):
         client.send(points)
 
 if __name__ == "__main__":

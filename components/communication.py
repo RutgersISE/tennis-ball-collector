@@ -67,7 +67,10 @@ class Server(object):
                     continue
                 self.strings_seen.add(string)
                 _, data = string.split(" ", 1)
-                message = ast.literal_eval(data)
+                try:
+                    message = ast.literal_eval(data)
+                except ValueError:
+                    message = data
                 if autoreply:
                     self.reply(True)
                 yield message
@@ -90,7 +93,7 @@ class Client(object):
         req_string = "%s %s" % (time.time(), req_message)
         self.socket.send_string(req_string)
         rep_string = self.socket.recv_string()
-        _, data = rep_string.split(" ", 2)
+        _, data = rep_string.split(" ", 1)
         message = ast.literal_eval(data)
         return message
 
