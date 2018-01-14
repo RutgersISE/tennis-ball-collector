@@ -8,4 +8,7 @@ class LatestSentTracker(object):
         self.targets = deepcopy(targets)
 
     def get_target(self):
-        return self.targets[0]
+        if self.targets:
+            return self.targets[0]
+        else:
+            return None
