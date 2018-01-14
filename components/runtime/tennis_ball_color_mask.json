@@ -3,5 +3,5 @@
   "upper" : [40, 255, 255],
   "minarea" : 50,
   "ksize" : [15, 15],
-  "iterations" : 1
+  "iterations" : 3
 }
