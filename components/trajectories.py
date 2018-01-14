@@ -53,7 +53,7 @@ class PointAndShootTrajector(object):
         delta = (disp_rho, 0)
         return move, delta
 
-    def traject(self, x, y, max_turn_time=.25, move_forward_time=1.0):
+    def traject(self, x, y, max_turn_time=.25, max_forward_time=1.0):
         rho, phi = cart2pol(x, y)
         rho *= 1.1
         move, delta = self._compute_turn(phi, max_turn_time)
