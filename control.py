@@ -17,7 +17,7 @@ def main(args):
                 continue
             else:
                 x, y = target_rel
-            for move, delta in trajector.traject(x, y, args.max_move_time):
+            for move, delta in trajector.traject(x, y, args.max_turn_time, args.max_forward_time):
                 commander.command(*move)
         except (KeyboardInterrupt, SystemExit):
             commander.command(0, 0)
@@ -36,7 +36,8 @@ if __name__ == "__main__":
                         help="Host for target tracking server. Defaults to 'localhost'")
     parser.add_argument("--port", dest="port", default="5555", type=str,
                         help="Port for target tracking server. Defaults to '5555'.")
-    parser.add_argument("--max_move_time", dest="max_move_time", default=.75, type=float)
+    parser.add_argument("--max_turn_time", dest="max_turn_time", default=0.25, type=float)
+    parser.add_argument("--max_forward_time", dest="max_forward_time", default=1.00, type=float)
     args = parser.parse_args()
 
     main(args)
