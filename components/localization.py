@@ -90,7 +90,7 @@ class ColorMaskLocater(object):
     def locate_all(self, show=False):
         for image in self.camera.capture():
             image_points, mask = self.detector.detect(image)
-            object_points = self.projector.project(image_points, 0)
+            object_points = self.projector.project(image_points, 1/12.)
             if show:
                 for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
                     cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
