@@ -41,7 +41,7 @@ class PointAndShootTrajector(object):
         delta = (0, disp_phi)
         return move, delta
 
-    def _compute_forward(self, disp_rho, max_forward_time=.25):
+    def _compute_forward(self, disp_rho, max_forward_time=1.0):
         if np.isclose(disp_rho, 0, atol=1e-2):
              return None, None
         left_speed, right_speed = self.speed, self.speed
@@ -53,7 +53,7 @@ class PointAndShootTrajector(object):
         delta = (disp_rho, 0)
         return move, delta
 
-    def traject(self, x, y, max_turn_time=.25, move_forward_time):
+    def traject(self, x, y, max_turn_time=.25, move_forward_time=1.0):
         rho, phi = cart2pol(x, y)
         rho *= 1.1
         move, delta = self._compute_turn(phi, max_turn_time)
