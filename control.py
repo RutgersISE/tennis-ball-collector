@@ -4,7 +4,7 @@ from components.trajectories import PointAndShootTrajector
 from components.searchers import RandomSearcher
 
 def main(args):
-    subscriber = Subscriber("target_rel", args.sub_port, timeout=100)
+    subscriber = Subscriber("target_rel", args.sub_port, timeout=500)
     commander = ArduinoCommander(args.device, args.baud)
     searcher = RandomSearcher(args.height, args.width)
     trajector = PointAndShootTrajector()
@@ -20,9 +20,8 @@ def main(args):
                 commander.command(*move)
                 searcher.update(*delta)
         except (KeyboardInterrupt, SystemExit):
-            break
-        finally:
             commander.command(0, 0)
+            break
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -41,7 +40,7 @@ if __name__ == "__main__":
                         help="Port for subscribing. Defaults to '5556'.")
     parser.add_argument("--pub_port", dest="pub_port", default="5558", type=str,
                         help="Port for publishing. Defaults to '5558'.")
-    parser.add_argument("--max_move_time", dest="max_move_time", default=.25, type=float)
+    parser.add_argument("--max_move_time", dest="max_move_time", default=.75, type=float)
     args = parser.parse_args()
 
     main(args)

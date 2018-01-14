@@ -29,8 +29,8 @@ class ArduinoCommander(object):
         self._send(left_speed, right_speed)
         if move_time is not None:
             time.sleep(move_time)
-        #if stop:
-        #    self._send(0, 0)
+        if stop:
+            self._send(0, 0)
 
 class DummyCommander(object):
 
