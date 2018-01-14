@@ -55,6 +55,7 @@ class PointAndShootTrajector(object):
 
     def traject(self, x, y, max_move_time=.25):
         rho, phi = cart2pol(x, y)
+        rho *= 1.1
         move, delta = self._compute_turn(phi, max_move_time)
         if move:
             yield move, delta
