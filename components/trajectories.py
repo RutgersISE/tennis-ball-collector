@@ -20,7 +20,7 @@ def pol2cart(rho, phi):
 
 class PointAndShootTrajector(object):
 
-    def __init__(self, speed=40, turn_scaling=115, forward_scaling=115):
+    def __init__(self, speed=40, turn_scaling=98, forward_scaling=115):
         self.speed = speed
         self.turn_scaling = turn_scaling
         self.forward_scaling = forward_scaling

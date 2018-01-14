@@ -31,6 +31,7 @@ class ArduinoCommander(object):
             time.sleep(move_time)
         if stop:
             self._send(0, 0)
+            time.sleep(.01) # allow serial to timeout
 
 class DummyCommander(object):
 
