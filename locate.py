@@ -1,6 +1,6 @@
 import os
 
-from components.communication import Publisher
+from components.communication import Client
 from components.localization import ColorMaskLocater
 if os.uname()[4][:3] == 'arm':
     from components.cameras import CalibratedPicamera as Camera
@@ -10,14 +10,9 @@ else:
 def main(args):
     camera = Camera(args.device)
     locator = ColorMaskLocater(camera)
-    if args.nearest:
-        publisher = Publisher("target_rel", args.pub_port, args.pub_host)
-        for point in locator.locate_nearest(args.show):
-            publisher.send(point)
-    else:
-        publisher = Publisher("onboard_view", args.pub_port, args.pub_host)
-        for points in locator.locate_all(args.show):
-            publisher.send(points)
+    client = Client(args.port, args.host)
+    for points in locator.locate_all(args.show):
+        client.send(points)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -32,10 +27,10 @@ if __name__ == "__main__":
                         help="""Publish nearest point directly to 'target_rel' topic.
                         This must be activated if running in single camera locate
                         and control mode.""")
-    parser.add_argument("--pub_host", dest="pub_host", default="localhost", type=str,
+    parser.add_argument("--host", dest="host", default="localhost", type=str,
                         help="Hostname for publishing. Defaults to 'localhost'.")
-    parser.add_argument("--pub_port", dest="pub_port", default="5556", type=str,
-                        help="Port for publishing. Defaults to '5556'.")
+    parser.add_argument("--port", dest="port", default="5555", type=str,
+                        help="Port for publishing. Defaults to '5555'.")
 
     args = parser.parse_args()
 
