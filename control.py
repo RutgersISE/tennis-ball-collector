@@ -11,6 +11,7 @@ def main(args):
     while True:
         try:
             target_rel = client.request("send_target")
+            print(target_rel)
             if target_rel is None:
                 commander.command(0, 0, 1)
                 continue

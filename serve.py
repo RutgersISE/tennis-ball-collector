@@ -1,14 +1,16 @@
+import time
+
 from components.communication import Server
 from components.trackers import LatestSentTracker
-from components.searchers import RandomSearcher
+from components.searchers import RotatingSearcher
 
 def main(port):
     server = Server(args.port)
     tracker = LatestSentTracker()
-    searcher = RandomSearcher(5, 5)
+    searcher = RotatingSearcher()
     for message_type, message in server.listen():
-        print(message_type, message)
         if message_type == "send_target":
+            print(time.time(), "target requested")
             target = tracker.get_target()
             if not target:
                 target = searcher.get_target()
@@ -19,6 +21,7 @@ def main(port):
             searcher.update_position(*message)
         elif message_type == "new_targets":
             server.reply(True)
+            print(time.time(), "targets at ", message)
             tracker.update_target(message)
         else:
             server.reply(False)

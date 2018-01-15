@@ -1,7 +1,7 @@
 import os
 
 from components.communication import Client
-from components.localization import ColorMaskLocater as Locator
+from components.localization import ColorMaskLocater as Locater
 if os.uname()[4][:3] == 'arm':
     from components.cameras import CalibratedPicamera as Camera
 else:
@@ -12,7 +12,7 @@ def main(args):
     locator = Locater(camera)
     client = Client(args.port, args.host)
     for targets in locator.locate(args.show):
-        client.send("targets", targets)
+        client.send("new_targets", targets)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

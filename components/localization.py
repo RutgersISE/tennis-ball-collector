@@ -64,7 +64,7 @@ class ColorMaskDetector(object):
         self.blob_detector = cv2.SimpleBlobDetector_create(params)
 
     def make_mask(self, image):
-        blurred = cv2.blur(image, self.ksize)
+        blurred = image #cv2.blur(image, self.ksize)
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, self.lower, self.upper)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, self.ksize, iterations=self.iterations)

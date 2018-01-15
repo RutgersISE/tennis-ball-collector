@@ -77,9 +77,8 @@ class CalibratedPicamera(object):
                                                     self.calibration["new_camera_matrix"],
                                                     (self.width, self.height),
                                                     5)
-        self.camera = picamera.PiCamera(sensor_mode=4, framerate=4)
+        self.camera = picamera.PiCamera(sensor_mode=4, framerate=5)
         self.camera.resolution = (640, 480)
-        self.camera.video_stabilization = True
         time.sleep(2)
 
     def capture(self):
