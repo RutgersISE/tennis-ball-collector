@@ -44,12 +44,9 @@ int right_rpm = 0;
 void loop() {
  if (Serial.available()) {
    int parse_success = parse(&left_rpm, &right_rpm);
-   
    left_stepper.setSpeed(abs(left_rpm));
-   right_stepper.setSpeed(abs(right_rpm)); 
-   Serial.println(parse_success);
+   right_stepper.setSpeed(abs(right_rpm));
  }
-
  right_stepper.step(-sign(right_rpm));
  left_stepper.step(sign(left_rpm));
 }

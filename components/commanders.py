@@ -41,5 +41,6 @@ class DummyCommander(object):
     def __init__(self):
         pass
 
-    def command(self, left_speed, right_speed, move_time=None):
-        print("command:", left_speed, right_speed, move_time)
+    def command(self, left_speed, right_speed, move_time=None, stop=False):
+        print("command:", left_speed, right_speed, move_time, stop)
+        time.sleep(move_time)

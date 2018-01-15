@@ -15,10 +15,11 @@ def main(args):
                 commander.command(0, 0, 1)
                 continue
             else:
-                rho, phi = target_rel
-                move, delta = trajector.traject(rho, phi)
+                rho, phi, finish = target_rel
+                move, delta = trajector.traject(rho, phi, finish)
                 if move:
                     commander.command(*move)
+                    client.send("new_position", delta)
                 else:
                     commander.command(0, 0, 1)
         except (KeyboardInterrupt, SystemExit):
@@ -35,16 +36,16 @@ if __name__ == "__main__":
     parser.add_argument("--baud", dest="baud", default=38400, type=int,
                         help="Baud rate for arduino. Defaults to '38400'.")
     parser.add_argument("--host", dest="host", default="localhost", type=str,
-                        help="""Host for target tracking server. Defaults to 
+                        help="""Host for target tracking server. Defaults to
                              'localhost'""")
     parser.add_argument("--port", dest="port", default="5555", type=str,
                         help="Port for target tracking server. Defaults to '5555'.")
     parser.add_argument("--buffer_distance", dest="buffer_distance", default=1.5,
                         type=float, help="""extra distance to travel to ensure that
                         ball is collected.""")
-    parser.add_argument("--max_turn_time", dest="max_turn_time", default=0.25, 
+    parser.add_argument("--max_turn_time", dest="max_turn_time", default=0.25,
                         type=float)
-    parser.add_argument("--max_forward_time", dest="max_forward_time", default=1.00, 
+    parser.add_argument("--max_forward_time", dest="max_forward_time", default=1.00,
                         type=float)
     args = parser.parse_args()
 

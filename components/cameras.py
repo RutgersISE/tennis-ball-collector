@@ -24,7 +24,7 @@ PI_PROJECTION_FILE = os.path.join(CURRDIR, "runtime/raspicam_v2_m4_backprojectio
 
 class CalibratedCamera(object):
 
-    def __init__(self, device, calibration_file=LOG_CALIBRATION_FILE, fps=20, n_frames=5):
+    def __init__(self, device, calibration_file=LOG_CALIBRATION_FILE, fps=60, n_frames=5):
         self.device = device
         self.n_frames = n_frames
         self.calibration = np.load(calibration_file)
