@@ -19,7 +19,7 @@ class PointAndShootTrajector(object):
         self.last_phi = None
         self.last_forward = None
 
-    def _compute_turn(self, disp_phi, tol=1e-1):
+    def _compute_turn(self, disp_phi, max_turn_time=.25, tol=1e-1):
         if disp_phi > tol:
             left_speed, right_speed = -self.speed, self.speed
         elif disp_phi < -tol:
@@ -52,8 +52,8 @@ class PointAndShootTrajector(object):
         delta = (disp_rho, 0)
         return move, delta
 
-    def traject(self, rho, phi, max_forward_time=1.0):
-        move, delta = self._compute_turn(phi)
+    def traject(self, rho, phi, max_turn_time=.25, max_forward_time=1.0):
+        move, delta = self._compute_turn(phi, max_turn_time)
         if move:
             self.last_phi = phi
             return move, delta
