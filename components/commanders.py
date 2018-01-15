@@ -16,14 +16,19 @@ class ArduinoCommander(object):
         self.baud = baud
         self.serial = Serial(self.port, self.baud, timeout=None)
         time.sleep(2)
+        self.last_message = None
 
     def _send(self, left_speed, right_speed):
         left_speed, right_speed = int(left_speed), int(right_speed)
         message = "%d %d\r\n" % (left_speed, right_speed)
+        if message == self.last_message:
+            # sending this message is redundant
+            return
         self.serial.flushInput()
         self.serial.flushOutput()
         self.serial.flush()
         self.serial.write(message.encode())
+        self.last_message = message
 
     def command(self, left_speed, right_speed, move_time=None, stop=False):
         self._send(left_speed, right_speed)
