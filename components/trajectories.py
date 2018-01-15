@@ -55,7 +55,7 @@ class PointAndShootTrajector(object):
         if move:
             self.last_target = (rho, phi)
             return move, delta
-        rho += .50
+        rho += 1.0
         move, delta = self._compute_forward(rho, max_forward_time)
         if move:
             self.last_target = (rho, phi)
