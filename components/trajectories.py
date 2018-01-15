@@ -14,6 +14,7 @@ class PointAndShootTrajector(object):
         self.speed = speed
         self.turn_scaling = turn_scaling
         self.forward_scaling = forward_scaling
+        self.last_target = None
 
     def _compute_turn(self, disp_phi, max_turn_time=.25):
         if np.isclose(disp_phi, 0, atol=1e-1):
@@ -50,15 +51,12 @@ class PointAndShootTrajector(object):
         return move, delta
 
     def traject(self, rho, phi, max_turn_time=.25, max_forward_time=1.0):
-        rho *= 1.2
         move, delta = self._compute_turn(phi, max_turn_time)
         if move:
-            yield move, delta
-            _, _, _, stop = move
-            if not stop:
-                # if turning move is incomplete, allow vision to check position
-                return
+            self.last_target = (rho, phi)
+            return move, delta
+        rho *= 1.2
         move, delta = self._compute_forward(rho, max_forward_time)
         if move:
-            yield move, delta
-        return
+            self.last_target = (rho, phi)
+            return move, delta

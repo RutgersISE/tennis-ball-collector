@@ -17,7 +17,9 @@ def main(args):
                 continue
             else:
                 rho, phi = target_rel
-            for move, delta in trajector.traject(rho, phi, args.max_turn_time, args.max_forward_time):
+                move, delta = trajector.traject(rho, phi,
+                                                args.max_turn_time,
+                                                args.max_forward_time)
                 commander.command(*move)
         except (KeyboardInterrupt, SystemExit):
             commander.command(0, 0)
