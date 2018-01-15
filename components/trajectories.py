@@ -34,7 +34,10 @@ class PointAndShootTrajector(object):
             direction = np.array([1, -1])
         left_speed, right_speed = self.speed*direction
         best_move_time = np.abs(disp_phi)/self.speed*self.turn_scaling
-        true_move_time = min(best_move_time, max_turn_time)
+        if best_move_time > max_turn_time:
+            true_move_time = best_move_time/2.0
+        else:
+            true_move_time = best_move_time
         disp_phi *= best_move_time/true_move_time
         stop = true_move_time >= best_move_time
         move = (left_speed, right_speed, true_move_time, stop)
@@ -46,7 +49,10 @@ class PointAndShootTrajector(object):
              return None, None
         left_speed, right_speed = self.speed, self.speed
         best_move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
-        true_move_time = min(best_move_time, max_forward_time)
+        if best_move_time > max_forward_time:
+            true_move_time = best_move_time/2.0
+        else:
+            true_move_time = best_move_time
         disp_rho *= best_move_time/true_move_time
         stop = true_move_time >= best_move_time
         move = (left_speed, right_speed, true_move_time, stop)
