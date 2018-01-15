@@ -8,16 +8,6 @@ __version__ = "0.1.0"
 from math import atan, sqrt, pow
 import numpy as np
 
-def cart2pol(x, y):
-    rho = np.sqrt(x**2 + y**2)
-    phi = np.arctan2(y, x) - np.pi/2 # 90 degree correction for headings
-    return(rho, phi)
-
-def pol2cart(rho, phi):
-    x = rho * np.cos(phi)
-    y = rho * np.sin(phi)
-    return(x, y)
-
 class PointAndShootTrajector(object):
 
     def __init__(self, speed=40, turn_scaling=98, forward_scaling=115):
@@ -59,9 +49,8 @@ class PointAndShootTrajector(object):
         delta = (disp_rho, 0)
         return move, delta
 
-    def traject(self, x, y, max_turn_time=.25, max_forward_time=1.0):
-        rho, phi = cart2pol(x, y)
-        rho *= 1.1
+    def traject(self, rho, phi, max_turn_time=.25, max_forward_time=1.0):
+        rho *= 1.2
         move, delta = self._compute_turn(phi, max_turn_time)
         if move:
             yield move, delta
@@ -73,8 +62,3 @@ class PointAndShootTrajector(object):
         if move:
             yield move, delta
         return
-
-if __name__ == "__main__":
-
-    trajector = PointAndShootTrajector()
-    print(trajector.traject(1, 1))
