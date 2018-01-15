@@ -7,7 +7,9 @@ from components.trajectories import PointAndShootTrajector
 def main(args):
     client = Client(args.port, args.host)
     commander = ArduinoCommander(args.device, args.baud)
-    trajector = PointAndShootTrajector()
+    trajector = PointAndShootTrajector(max_turn_time=args.max_turn_time,
+                                       max_forward_time=args.max_forward_time,
+                                       buffer_distance=args.buffer_distance)
     while True:
         try:
             target_rel = client.request("send_target")
@@ -17,9 +19,7 @@ def main(args):
                 continue
             else:
                 rho, phi = target_rel
-                move, delta = trajector.traject(rho, phi,
-                                                args.max_turn_time,
-                                                args.max_forward_time)
+                move, delta = trajector.traject(rho, phi)
                 commander.command(*move)
         except (KeyboardInterrupt, SystemExit):
             commander.command(0, 0)
@@ -38,6 +38,9 @@ if __name__ == "__main__":
                         help="Host for target tracking server. Defaults to 'localhost'")
     parser.add_argument("--port", dest="port", default="5555", type=str,
                         help="Port for target tracking server. Defaults to '5555'.")
+    parser.add_argument("--buffer_distance", dest="buffer_distance", default=1.5,
+                        type=float, help="""extra distance to travel to allow
+                        ball to be collected.""")
     parser.add_argument("--max_turn_time", dest="max_turn_time", default=0.25, type=float)
     parser.add_argument("--max_forward_time", dest="max_forward_time", default=1.00, type=float)
     args = parser.parse_args()

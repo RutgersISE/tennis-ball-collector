@@ -24,11 +24,10 @@ class ArduinoCommander(object):
         if message == self.last_message:
             # sending this message is redundant
             return
-        self.serial.flushInput()
-        self.serial.flushOutput()
         self.serial.flush()
         self.serial.write(message.encode())
         self.last_message = message
+        time.sleep(.01)
 
     def command(self, left_speed, right_speed, move_time=None, stop=False):
         self._send(left_speed, right_speed)
@@ -36,7 +35,6 @@ class ArduinoCommander(object):
             time.sleep(move_time)
         if stop:
             self._send(0, 0)
-            time.sleep(.01) # allow serial to timeout
 
 class DummyCommander(object):
 
