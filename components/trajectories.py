@@ -16,7 +16,7 @@ class PointAndShootTrajector(object):
         self.forward_scaling = forward_scaling
 
     def _compute_turn(self, disp_phi, max_turn_time=.25):
-        if np.isclose(disp_phi, 0, atol=2.5e-1):
+        if np.isclose(disp_phi, 0, atol=1e-1):
             return None, None
         elif disp_phi > 0:
             direction = np.array([-1, 1])
