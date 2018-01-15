@@ -25,29 +25,31 @@ class PointAndShootTrajector(object):
 
     def _compute_turn(self, disp_phi, tol=1e-1):
         if disp_phi > tol:
-            left_speed, right_speed = -self.speed, self.speed
+            left_speed, right_speed = -self.speed/4.0, self.speed/4.0
         elif disp_phi < -tol:
-            left_speed, right_speed = self.speed, -self.speed
+            left_speed, right_speed = self.speed/4.0, -self.speed/4.0
         else:
             return None, None
-        true_move_time = np.abs(disp_phi)/self.speed*self.turn_scaling
+        true_move_time = np.abs(disp_phi)/self.speed*4.0*self.turn_scaling
+        stop = True
         while true_move_time > self.max_turn_time:
             true_move_time /= 2.0
             disp_phi /= 2.0
-        stop = true_move_time >= best_move_time
+            stop = False
         move = (left_speed, right_speed, true_move_time, stop)
         delta = (0, disp_phi)
         return move, delta
 
     def _compute_forward(self, disp_rho, tol=1e-3):
-        if np.abs(disp_rho) > tol:
+        if np.abs(disp_rho) < tol:
              return None, None
         left_speed, right_speed = self.speed, self.speed
         true_move_time = np.abs(disp_rho)/self.speed*self.forward_scaling
+        stop = True
         while true_move_time > self.max_forward_time:
             true_move_time /= 2.0
             disp_rho /= 2.0
-        stop = true_move_time >= best_move_time
+            stop = False
         move = (left_speed, right_speed, true_move_time, stop)
         delta = (disp_rho, 0)
         return move, delta
@@ -60,3 +62,4 @@ class PointAndShootTrajector(object):
         move, delta = self._compute_forward(rho)
         if move:
             return move, delta
+        return None, None

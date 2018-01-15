@@ -27,7 +27,7 @@ class ArduinoCommander(object):
         self.serial.flush()
         self.serial.write(message.encode())
         self.last_message = message
-        time.sleep(.01)
+        time.sleep(.05)
 
     def command(self, left_speed, right_speed, move_time=None, stop=False):
         self._send(left_speed, right_speed)

@@ -1,6 +1,8 @@
 from components.communication import Server
 from components.trackers import LatestSentTracker
 
+
+
 def main(port):
     server = Server(args.port)
     tracker = LatestSentTracker()

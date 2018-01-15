@@ -1,5 +1,3 @@
-import time
-
 from components.communication import Client
 from components.commanders import ArduinoCommander
 from components.trajectories import PointAndShootTrajector
@@ -14,13 +12,15 @@ def main(args):
         try:
             target_rel = client.request("send_target")
             if target_rel is None:
-                commander.command(0, 0)
-                time.sleep(1)
+                commander.command(0, 0, 1)
                 continue
             else:
                 rho, phi = target_rel
                 move, delta = trajector.traject(rho, phi)
-                commander.command(*move)
+                if move:
+                    commander.command(*move)
+                else:
+                    commander.command(0, 0, 1)
         except (KeyboardInterrupt, SystemExit):
             commander.command(0, 0)
             break
@@ -35,14 +35,17 @@ if __name__ == "__main__":
     parser.add_argument("--baud", dest="baud", default=38400, type=int,
                         help="Baud rate for arduino. Defaults to '38400'.")
     parser.add_argument("--host", dest="host", default="localhost", type=str,
-                        help="Host for target tracking server. Defaults to 'localhost'")
+                        help="""Host for target tracking server. Defaults to 
+                             'localhost'""")
     parser.add_argument("--port", dest="port", default="5555", type=str,
                         help="Port for target tracking server. Defaults to '5555'.")
     parser.add_argument("--buffer_distance", dest="buffer_distance", default=1.5,
-                        type=float, help="""extra distance to travel to allow
-                        ball to be collected.""")
-    parser.add_argument("--max_turn_time", dest="max_turn_time", default=0.25, type=float)
-    parser.add_argument("--max_forward_time", dest="max_forward_time", default=1.00, type=float)
+                        type=float, help="""extra distance to travel to ensure that
+                        ball is collected.""")
+    parser.add_argument("--max_turn_time", dest="max_turn_time", default=0.25, 
+                        type=float)
+    parser.add_argument("--max_forward_time", dest="max_forward_time", default=1.00, 
+                        type=float)
     args = parser.parse_args()
 
     main(args)
