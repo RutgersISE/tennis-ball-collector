@@ -1,3 +1,10 @@
+"""
+Control frontend for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
 from components.communication import Client
 from components.commanders import ArduinoCommander
 from components.controllers import PointAndShootController
@@ -9,22 +16,19 @@ def main(args):
     controller = PointAndShootController(max_turn_time=args.max_turn_time,
                                          max_forward_time=args.max_forward_time,
                                          buffer_distance=args.buffer_distance)
-    while True:
-        try:
-            target_rel = client.request("send_target")
-            if target_rel is None:
-                commander.command(0, 0, 1)
-                continue
+    for target_rel in client.listen("send_target")
+        if target_rel is None:
+            commander.command(0, 0, 1)
+            continue
+        else:
+            move, delta = controller.control(*target_rel)
+            if move:
+                commander.command(*move)
+                client.send("new_position", delta)
             else:
-                move, delta = controller.control(*target_rel)
-                if move:
-                    commander.command(*move)
-                    client.send("new_position", delta)
-                else:
-                    commander.command(0, 0, 1)
-        except (KeyboardInterrupt, SystemExit):
-            commander.command(0, 0)
-            break
+                commander.command(0, 0, 1)
+    else:
+        commander.command(0, 0)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

@@ -1,3 +1,10 @@
+"""
+Central Server for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
 import time
 
 from components.communication import Server
@@ -5,6 +12,7 @@ from components.trackers import LatestSentTracker
 from components.searchers import RotatingSearcher
 
 def main(port):
+    """ main function for server """
     server = Server(args.port)
     tracker = LatestSentTracker()
     #searcher = RotatingSearcher()

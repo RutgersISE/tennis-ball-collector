@@ -10,7 +10,6 @@ import time
 
 import zmq
 
-
 class Server(object):
 
     def __init__(self, port):
@@ -61,3 +60,10 @@ class Client(object):
 
     def send(self, message_type, req_message=None):
         self.request(message_type, req_message)
+
+    def listen(self, message_type):
+        while True:
+            try:
+                yield self.send(message_type)
+            except (KeyboardInterrupt, SystemExit):
+                return
