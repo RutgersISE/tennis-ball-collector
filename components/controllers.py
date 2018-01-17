@@ -37,8 +37,6 @@ class PointAndShootController(object):
         return move, delta
 
     def _compute_forward(self, disp_rho, speed, finish=True):
-        if np.abs(disp_rho) < tol:
-             return None, None
         left_speed, right_speed = self.forward_speed, self.forward_speed
         if disp_rho > self.outer_radius:
             disp_rho -= self.outer_radius
