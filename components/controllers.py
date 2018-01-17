@@ -37,10 +37,10 @@ class PointAndShootController(object):
         return move, delta
 
     def _compute_forward(self, disp_rho, speed, finish=True):
-        left_speed, right_speed = self.forward_speed, self.forward_speed
+        left_speed = right_speed =  speed
         if disp_rho > self.outer_radius:
             disp_rho -= self.outer_radius
-        true_move_time = np.abs(disp_rho)/self.forward_speed*self.forward_scaling
+        true_move_time = np.abs(disp_rho)/speed*self.forward_scaling
         stop = True
         move = (left_speed, right_speed, true_move_time, stop)
         delta = (disp_rho, 0)
