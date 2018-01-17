@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+Search algorithms for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
 import numpy as np
 
 def cart2pol(x, y):

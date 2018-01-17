@@ -1,5 +1,6 @@
+#!/usr/bin/env python3
 """
-Control system for tennis ball collector.
+Trajectory control system for tennis ball collector.
 """
 
 __author__ = "Andrew Benton"
@@ -8,6 +9,22 @@ __version__ = "0.1.0"
 import numpy as np
 
 class PointAndShootController(object):
+    """Computes left and right speed given the desired heading 
+        Point and shoot first executes a turn and then drives forward.
+        
+        To make this method more robust, the following logic is followed:
+            - If the target distance is outside an outer radius, 
+            turn until it is centered and move until at the outer radius.
+            (DO NOT CAPTURE TARGET)
+            - If the target distance is between an inner and outer radius, 
+            turn (slower) until it is centered and move to the target.
+            (CAPTURE TARGET)
+            - If the target distance is inside the inner radius, only move 
+            forward if centered (CAPTURE TARGET), otherwise back up and try 
+            again (DO NOT CAPTURE TARGET).
+        
+        Executing in this manner tends to allow more captures. 
+    """
 
     def __init__(self, turn_scaling=98, forward_scaling=115,
                 buffer_distance=1.5, max_turn_time=0.5, max_forward_time=1.0):

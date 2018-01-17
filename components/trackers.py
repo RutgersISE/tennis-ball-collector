@@ -1,3 +1,10 @@
+"""
+Target tracking for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
 import numpy as np
 
 def cart2pol(x, y):
@@ -11,6 +18,7 @@ def pol2cart(rho, phi):
     return(x, y)
 
 class LatestSentTracker(object):
+
     def __init__(self):
         self.targets = np.empty((2, 0), dtype=np.float32)
         self.curr_x = self.curr_y = self.curr_phi = 0

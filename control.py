@@ -16,7 +16,6 @@ def main(args):
                 commander.command(0, 0, 1)
                 continue
             else:
-                rho, phi, finish = target_rel
                 move, delta = controller.control(*target_rel)
                 if move:
                     commander.command(*move)

@@ -6,10 +6,11 @@ Vision system for tennis ball collector.
 __author__ = "Andrew Benton"
 __version__ = "0.1.0"
 
-import numpy as np
-import cv2
 import json
 import os
+
+import cv2
+import numpy as np
 
 CURRDIR = os.path.dirname(__file__)
 

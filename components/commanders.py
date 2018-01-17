@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
-Control system for tennis ball collector.
+Motor controller commanders for tennis ball collector.
 """
 
 __author__ = "Andrew Benton"
 __version__ = "0.1.0"
 
-from serial import Serial
 import time
+
+from serial import Serial
+
 
 class ArduinoCommander(object):
 
@@ -27,7 +29,7 @@ class ArduinoCommander(object):
         self.serial.flush()
         self.serial.write(message.encode())
         self.last_message = message
-        time.sleep(.10)
+        time.sleep(.10) # allows arduino to timeout
 
     def command(self, left_speed, right_speed, move_time=None, stop=False):
         self._send(left_speed, right_speed)
