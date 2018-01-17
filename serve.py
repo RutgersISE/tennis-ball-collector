@@ -7,18 +7,18 @@ from components.searchers import RotatingSearcher
 def main(port):
     server = Server(args.port)
     tracker = LatestSentTracker()
-    searcher = RotatingSearcher()
+    #searcher = RotatingSearcher()
     for message_type, message in server.listen():
         if message_type == "send_target":
             print(time.time(), "target requested")
             target = tracker.get_target()
-            if not target:
-                target = searcher.get_target()
+    #        if not target:
+    #            target = searcher.get_target()
             server.reply(target)
         elif message_type == "new_position":
             server.reply(True)
             tracker.update_position(*message)
-            searcher.update_position(*message)
+    #        searcher.update_position(*message)
         elif message_type == "new_targets":
             server.reply(True)
             print(time.time(), "targets at ", message)

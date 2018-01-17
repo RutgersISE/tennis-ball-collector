@@ -1,23 +1,23 @@
 from components.communication import Client
 from components.commanders import ArduinoCommander
-from components.trajectories import PointAndShootTrajector
+from components.controllers import PointAndShootController
 
 def main(args):
+    """main function for controller"""
     client = Client(args.port, args.host)
     commander = ArduinoCommander(args.device, args.baud)
-    trajector = PointAndShootTrajector(max_turn_time=args.max_turn_time,
-                                       max_forward_time=args.max_forward_time,
-                                       buffer_distance=args.buffer_distance)
+    controller = PointAndShootController(max_turn_time=args.max_turn_time,
+                                         max_forward_time=args.max_forward_time,
+                                         buffer_distance=args.buffer_distance)
     while True:
         try:
             target_rel = client.request("send_target")
-            print(target_rel)
             if target_rel is None:
                 commander.command(0, 0, 1)
                 continue
             else:
                 rho, phi, finish = target_rel
-                move, delta = trajector.traject(rho, phi, finish)
+                move, delta = controller.control(*target_rel)
                 if move:
                     commander.command(*move)
                     client.send("new_position", delta)
