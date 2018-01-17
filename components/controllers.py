@@ -38,8 +38,6 @@ class PointAndShootController(object):
 
     def _compute_forward(self, disp_rho, speed, finish=True):
         left_speed = right_speed =  speed
-        if disp_rho > self.outer_radius:
-            disp_rho -= self.outer_radius
         true_move_time = np.abs(disp_rho)/np.abs(speed)*self.forward_scaling
         stop = True
         move = (left_speed, right_speed, true_move_time, stop)
