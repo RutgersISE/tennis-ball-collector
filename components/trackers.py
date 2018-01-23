@@ -1,5 +1,4 @@
 import numpy as np
-from copy import deepcopy
 
 def cart2pol(x, y):
     rho = np.sqrt(x**2 + y**2)
@@ -17,7 +16,7 @@ class LatestSentTracker(object):
         self.curr_x = self.curr_y = self.curr_phi = 0
 
     def update_target(self, targets):
-        self.targets = deepcopy(targets)
+        self.targets = np.array(targets)
 
     def get_target(self):
         if not self.targets:

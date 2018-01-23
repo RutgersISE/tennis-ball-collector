@@ -1,7 +1,7 @@
 import os
 
 from components.communication import Client
-from components.localization import ColorMaskLocater as Locator
+from components.localization import ColorMaskLocater as Locater
 if os.uname()[4][:3] == 'arm':
     from components.cameras import CalibratedPicamera as Camera
 else:

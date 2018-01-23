@@ -12,13 +12,7 @@ def pol2cart(rho, phi):
 
 class RandomSearcher(object):
 
-    def __init__(self, box_height, box_width):
-        self.box_height, self.box_width = box_height, box_width
-        self.curr_x = self.box_width/2.0
-        self.curr_y = self.box_height/2.0
-        self.curr_phi = 0
-        self.next_x = np.random.uniform(0, self.box_width)
-        self.next_y = np.random.uniform(0, self.box_height)
+    def __init__(self, x=0, y=0):
         self._n = 0
 
     def get_target(self):

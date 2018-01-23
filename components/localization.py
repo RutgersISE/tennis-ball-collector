@@ -71,8 +71,10 @@ class ColorMaskDetector(object):
         return mask
 
     def get_coords(self, mask):
-        keypoints = self.blob_detector.detect(mask)
-        image_points = np.array([(int(point.pt[0]), int(point.pt[1])) for point in keypoints])
+        x, y, w, h = cv2.boundingRect(mask)
+        keypoints = self.blob_detector.detect(mask[y:(y+h), x:(x+w)])
+        image_points = np.array([(int(point.pt[0] + x), int(point.pt[1] + y)) for point in keypoints])
+        print(x, y, w, h, mask.shape)
         return image_points
 
     def detect(self, image):
