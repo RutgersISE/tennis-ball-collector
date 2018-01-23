@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+Search algorithms for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
 import numpy as np
 
 def cart2pol(x, y):
@@ -37,3 +45,14 @@ class RandomSearcher(object):
             np.isclose(self.curr_y, self.next_y, atol=5e-1):
             self.next_x = np.random.uniform(0, self.box_width)
             self.next_y = np.random.uniform(0, self.box_height)
+
+class RotatingSearcher(object):
+
+    def __init__(self):
+        self.curr_phi = 0
+
+    def get_target(self):
+        return 0, 2*np.pi, False
+    
+    def update_position(self, disp_rho, disp_phi):
+        pass
