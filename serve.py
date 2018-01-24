@@ -26,7 +26,7 @@ def main(port):
         elif message_type == "new_position":
             server.reply(True)
             tracker.update_position(*message)
-    #        searcher.update_position(*message)
+#        searcher.update_position(*message)
         elif message_type == "new_targets":
             server.reply(True)
             print(time.time(), "targets at ", message)
