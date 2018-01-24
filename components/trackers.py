@@ -39,3 +39,9 @@ class LatestSentTracker(object):
         self.curr_phi += disp_phi
         self.curr_x += disp_rho*np.cos(self.curr_phi)
         self.curr_y += disp_rho*np.sin(self.curr_phi)
+
+    def update_target_abs(self, targets):
+        self.targets = np.array(targets)
+
+    def update_agent_abs(self, agent):
+        self.curr_x, self.curr_y, self.curr_phi = agent

@@ -12,9 +12,8 @@ def main(args):
     target_locator = TargetLocator()
     agent_locator = AgentLocator()
     client = Client(args.port, args.host)
-    for targets, agent in watch(camera, target_locator, agent_locator):
-        #print(targets, agent)
-        client.send("new_targets", targets)
+    for targets, agent in watch(camera, target_locator, agent_locator, args.show):
+        client.send("abs_state", (targets, agent))
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

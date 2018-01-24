@@ -118,13 +118,13 @@ class AgentDetector(object):
         front = np.argmax(dist)
         dist = np.sum(np.power(centers - centers[front], 2), axis=1)
         rear = np.argmax(dist)
-        return centers[front], centers[rear]
+        return centers[front], centers[rear], mask
 
     def detect(self, image):
         mask_1 = self._make_mask(image, self.range_1_lower, self.range_1_upper)
         mask_2 = self._make_mask(image, self.range_2_lower, self.range_2_upper)
         mask = cv2.bitwise_or(mask_1, mask_2)
-        front, rear = self._get_coords(mask)
+        front, rear, mask = self._get_coords(mask)
         return front, rear, mask
 
 class TargetLocator(object):
@@ -133,13 +133,19 @@ class TargetLocator(object):
         self.detector = TargetDetector()
         self.projector = RANSACProjector()
 
-    def locate(self, image):
+    def locate(self, image, display_image=None):
         image_points, mask = self.detector.detect(image)
         object_points = self.projector.project(image_points, 1/12.)
+        if display_image is not None:
+            for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
+                cv2.circle(display_image, (img_x, img_y), 3, (0, 0, 0), -1)
+                text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
+                cv2.putText(display_image, text, (img_x + 5, img_y - 5),
+                            cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
         if object_points.size:
-            return list(map(tuple, object_points)), mask
+            return list(map(tuple, object_points)), display_image
         else:
-            return [], mask
+            return [], display_image
 
 class AgentLocator(object):
 
@@ -147,21 +153,24 @@ class AgentLocator(object):
         self.detector = AgentDetector()
         self.projector = RANSACProjector()
 
-    def locate(self, image, show=False):
+    def locate(self, image, display_image=None):
         image_front, image_rear, mask = self.detector.detect(image)
         object_front = self.projector.project(np.array([image_front]), 0.5)
         object_rear = self.projector.project(np.array([image_rear]), 0.5)
         object_delta = object_front - object_rear
-        object_phi = np.arctan2(object_delta[0, 1], object_delta[0, 0])
-        return (object_front, object_phi), mask
+        x, y = tuple(object_delta[0])
+        phi = np.arctan2(y, x)
+        if display_image is not None:
+            cv2.arrowedLine(display_image, tuple(image_rear), tuple(image_front),
+                            (0, 0, 0), 3)
+        return (x, y, phi), display_image
 
 def watch(camera, target_locator, agent_locator, show=False):
     for image in camera.capture():
-        targets, target_mask = target_locator.locate(image)
-        agent, agent_mask = agent_locator.locate(image)
+        targets, display_image = target_locator.locate(image, image)
+        agent, display_image = agent_locator.locate(image, display_image)
         if show:
-            cv2.imshow("target_mask", target_mask)
-            cv2.imshow("agent_mask", agent_mask)
+            cv2.imshow("analysis_feed", display_image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         yield targets, agent
