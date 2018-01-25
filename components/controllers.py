@@ -61,7 +61,7 @@ class PointAndShootController(object):
                 move, delta = self._compute_forward(rho, 
                                                     self.max_speed, 
                                                     finish)
-        elif between:
+        else:
             # when between circles, make slow, precise turns
             if not centered:
                 move, delta = self._compute_turn(phi, 
@@ -71,18 +71,18 @@ class PointAndShootController(object):
                 move, delta = self._compute_forward(rho, 
                                                     self.max_speed, 
                                                     finish)
-        elif inside:
-            # when inside the inner circle
-            if not centered:
-                rho = abs(self.outer_radius - rho)
-                move, delta = self._compute_forward(rho, 
-                                                    -self.max_speed/2, 
-                                                    finish)
-            else:
-                move, delta = self._compute_forward(rho, 
-                                                    self.max_speed, 
-                                                    finish)
-        else:
-            # this should never occur
-            assert False, "Logical Error"
+        #elif inside:
+        #    # when inside the inner circle
+        #    if not centered:
+        #        rho = abs(self.outer_radius - rho)
+        #        move, delta = self._compute_forward(rho, 
+        #                                            -self.max_speed/2, 
+        #                                            finish)
+        #    else:
+        #        move, delta = self._compute_forward(rho, 
+        #                                            self.max_speed, 
+        #                                            finish)
+        #else:
+        #    # this should never occur
+        #    assert False, "Logical Error"
         return move, delta

@@ -56,18 +56,18 @@ class ColorMaskDetector(object):
         # used if the color mask has been well tuned to a particular background
         params.minCircularity = 0.50
         params.maxCircularity = np.inf
-        params.filterByCircularity = True
+        params.filterByCircularity = False
         params.minInertiaRatio = 0.25
         params.maxInertiaRatio = np.inf
-        params.filterByInertia = True
+        params.filterByInertia = False
         params.filterByConvexity = False
         self.blob_detector = cv2.SimpleBlobDetector_create(params)
 
     def make_mask(self, image):
-        blurred = image #cv2.blur(image, self.ksize)
+        blurred = cv2.blur(image, self.ksize)
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, self.lower, self.upper)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, self.ksize, iterations=self.iterations)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_DILATE, self.ksize, iterations=self.iterations)
         return mask
 
     def get_coords(self, mask):
