@@ -1,28 +1,28 @@
+"""
+Central Server for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
 import time
 
 from components.communication import Server
 from components.trackers import LatestSentTracker
-from components.searchers import RotatingSearcher
 
 def main(port):
+    """ main function for server """
     server = Server(args.port)
     tracker = LatestSentTracker()
-    #searcher = RotatingSearcher()
     for message_type, message in server.listen():
         if message_type == "send_target":
-            print(time.time(), "target requested")
             target = tracker.get_target()
-    #        if not target:
-    #            target = searcher.get_target()
             server.reply(target)
-        elif message_type == "new_position":
+        elif message_type == "abs_state":
+            targets, agent = message
             server.reply(True)
-            tracker.update_position(*message)
-    #        searcher.update_position(*message)
-        elif message_type == "new_targets":
-            server.reply(True)
-            print(time.time(), "targets at ", message)
-            tracker.update_target(message)
+            tracker.update_target_abs(targets)
+            tracker.update_agent_abs(agent)
         else:
             server.reply(False)
 
