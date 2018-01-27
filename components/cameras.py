@@ -79,8 +79,17 @@ class CalibratedPicamera(object):
                                                     5)
         self.camera = picamera.PiCamera(sensor_mode=4, framerate=5)
         self.camera.resolution = (640, 480)
+        self.camera.awb_mode = "auto"
+        self.camera.exposure_mode = "auto"
         time.sleep(2)
 
+    def capture_single(self):
+        with picamera.array.PiRGBArray(self.camera, size=self.camera.resolution) as stream:
+            self.camera.capture(stream, "bgr")
+            image = stream.array
+            image = cv2.remap(image, self.map_x, self.map_y, cv2.INTER_LINEAR)
+            return image
+    
     def capture(self):
         with picamera.array.PiRGBArray(self.camera, size=self.camera.resolution) as stream:
             for frame in self.camera.capture_continuous(stream, format="bgr", use_video_port=True):
@@ -91,9 +100,6 @@ class CalibratedPicamera(object):
                     stream.truncate(0)
                 except (KeyboardInterrupt, SystemExit):
                     return
-
-    def capture_single(self):
-        raise NotImplementedError()
 
     def __del__(self):
         self.camera.close()

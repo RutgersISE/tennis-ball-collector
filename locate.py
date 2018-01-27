@@ -1,8 +1,9 @@
 import os
+import platform
 
 from components.communication import Client
-from components.localization import TargetLocator, AgentLocator, watch
-if os.uname()[4][:3] == 'arm':
+from components.localization import TargetLocator, AgentLocator, watch_onboard, watch_offboard
+if platform.uname()[4][:3] == 'arm':
     from components.cameras import CalibratedPicamera as Camera
 else:
     from components.cameras import CalibratedCamera as Camera
@@ -10,10 +11,16 @@ else:
 def main(args):
     camera = Camera(args.device)
     target_locator = TargetLocator()
-    agent_locator = AgentLocator()
     client = Client(args.port, args.host)
-    for targets, agent in watch(camera, target_locator, agent_locator, args.show):
-        client.send("abs_state", (targets, agent))
+    if args.onboard:
+        for targets in watch_onboard(camera, target_locator,
+                                     args.show):
+            client.send("rel_targets", targets)
+    else:
+        agent_locator = AgentLocator()
+        for targets, _ in watch_offboard(camera, target_locator, 
+                                             agent_locator, args.show):
+            client.send("abs_targets", targets)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
@@ -28,10 +35,14 @@ if __name__ == "__main__":
                         help="""Publish nearest point directly to 'target_rel' topic.
                         This must be activated if running in single camera locate
                         and control mode.""")
+    parser.add_argument("--onboard", dest="onboard", action="store_true")
     parser.add_argument("--host", dest="host", default="localhost", type=str,
                         help="Hostname for publishing. Defaults to 'localhost'.")
     parser.add_argument("--port", dest="port", default="5555", type=str,
                         help="Port for publishing. Defaults to '5555'.")
     args = parser.parse_args()
+
+    if os.name == "nt":
+        args.device = 0
 
     main(args)

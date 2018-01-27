@@ -18,11 +18,19 @@ def main(port):
         if message_type == "send_target":
             target = tracker.get_target()
             server.reply(target)
-        elif message_type == "abs_state":
-            targets, agent = message
+        elif message_type == "abs_targets":
+            targets = message
             server.reply(True)
             tracker.update_target_abs(targets)
-            tracker.update_agent_abs(agent)
+        elif message_type == "rel_targets":
+            targets = message 
+            server.reply(True)
+            print("recieved %d rel_targets" % len(targets))
+            tracker.update_target_rel(targets)
+        elif message_type == "rel_agent": 
+            agent = message
+            server.reply(True)
+            tracker.update_agent_rel(*agent)
         else:
             server.reply(False)
 

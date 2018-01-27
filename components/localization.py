@@ -64,11 +64,7 @@ class TargetDetector(object):
         params.filterByConvexity = False
         self.blob_detector = cv2.SimpleBlobDetector_create(params)
 
-<<<<<<< HEAD
-    def make_mask(self, image):
-=======
     def _make_mask(self, image):
->>>>>>> dd7e754942690ebf5179c11e14f1815637513da8
         blurred = cv2.blur(image, self.ksize)
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, self.lower, self.upper)
@@ -104,6 +100,8 @@ class AgentDetector(object):
 
     def _get_coords(self, mask):
         _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours:
+            return None, None, mask
         contour = max(contours, key = cv2.contourArea)
         mask = np.zeros_like(mask)
         cv2.fillPoly(mask, [contour], (255, 255, 255))
@@ -159,6 +157,8 @@ class AgentLocator(object):
 
     def locate(self, image, display_image=None):
         image_front, image_rear, mask = self.detector.detect(image)
+        if image_front is None:
+            return (None, None, None), display_image
         object_front = self.projector.project(np.array([image_front]), 0.5)
         object_rear = self.projector.project(np.array([image_rear]), 0.5)
         object_delta = object_front - object_rear
@@ -169,20 +169,25 @@ class AgentLocator(object):
                             (0, 0, 0), 3)
         return (x, y, phi), display_image
 
-def watch(camera, target_locator, agent_locator, show=False):
+def watch_offboard(camera, target_locator, agent_locator, show=False):
+    while True:
+        try:
+            image = camera.capture_single()
+            targets, display_image = target_locator.locate(image, image.copy())
+            #agent, display_image = agent_locator.locate(image, display_image)
+            if show:
+                cv2.imshow("analysis_feed", display_image)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            yield targets, None
+        except (KeyboardInterrupt, SystemExit):
+            return
+
+def watch_onboard(camera, target_locator, show=False):
     for image in camera.capture():
-        targets, display_image = target_locator.locate(image, image)
-        agent, display_image = agent_locator.locate(image, display_image)
+        targets, display_image = target_locator.locate(image, image.copy())
         if show:
             cv2.imshow("analysis_feed", display_image)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-        yield targets, agent
-    #if show:
-    #    for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
-    #        cv2.circle(image, (img_x, img_y), 3, (0, 0, 0), -1)
-    #        text = "(%3.1f, %3.1f)" % (obj_x, obj_y)
-    #        cv2.putText(image, text, (img_x + 5, img_y - 5),
-    #                    cv2.FONT_HERSHEY_SIMPLEX, .5, (0, 0, 0))
-    #    cv2.imshow("camera: analysis feed", image)
-    #    cv2.imshow("camera: color mask", mask)
+        yield targets
