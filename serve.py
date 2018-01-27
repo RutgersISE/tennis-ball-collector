@@ -15,9 +15,11 @@ def main(port):
     server = Server(args.port)
     tracker = LatestSentTracker()
     for message_type, message in server.listen():
-        if message_type == "send_target":
-            target = tracker.get_target()
+        if message_type == "send_target_rel":
+            target = tracker.get_target_rel()
+            print(target)
             server.reply(target)
+            print("sent 1 target_rel")
         elif message_type == "abs_targets":
             targets = message
             server.reply(True)

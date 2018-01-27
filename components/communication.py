@@ -64,6 +64,6 @@ class Client(object):
     def listen(self, message_type):
         while True:
             try:
-                yield self.send(message_type)
+                yield self.request(message_type)
             except (KeyboardInterrupt, SystemExit):
                 return

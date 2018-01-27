@@ -16,7 +16,8 @@ def main(args):
     controller = PointAndShootController(max_turn_time=args.max_turn_time,
                                          max_forward_time=args.max_forward_time,
                                          buffer_distance=args.buffer_distance)
-    for target_rel in client.listen("send_target")
+    for target_rel in client.listen("send_target_rel"):
+        print(target_rel)
         if target_rel is None:
             commander.command(0, 0, 1)
             continue
