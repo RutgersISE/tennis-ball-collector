@@ -86,10 +86,11 @@ class TargetDetector(object):
 
 class AgentDetector(object):
 
-    range_1_lower = np.array([  0,  80,  80], np.uint8)
+    range_1_lower = np.array([  0,  50,  50], np.uint8)
     range_1_upper = np.array([ 10, 255, 255], np.uint8)
-    range_2_lower = np.array([170,  80,  80], np.uint8)
+    range_2_lower = np.array([170,  50,  50], np.uint8)
     range_2_upper = np.array([180, 255, 255], np.uint8)
+    dictionary = cv2.aruco.Dictionary_create(50, 4)
 
     def __init__(self):
         pass
@@ -100,36 +101,30 @@ class AgentDetector(object):
         mask = cv2.dilate(mask, np.ones((3, 3)))
         return mask
 
-    def _get_coords(self, mask):
-        _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        if not contours:
-            return None, None, mask
-        contour = max(contours, key = cv2.contourArea)
-        mask = np.zeros_like(mask)
-        cv2.fillPoly(mask, [contour], (255, 255, 255))
-        points = np.squeeze(cv2.findNonZero(mask))
-        centroid = np.mean(points, axis=0)
-        rect = cv2.minAreaRect(contour)
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-        # TODO sloppy
-        lines = [(box[0], box[-1])]
-        for a, b in zip(box[1:], box[:-1]):
-            lines.append((a, b))
-        lines = np.array(lines)
-        centers = np.mean(lines, axis=1).astype(int)
-        dist = np.sum(np.power(centers - centroid, 2), axis=1)
-        front = np.argmax(dist)
-        dist = np.sum(np.power(centers - centers[front], 2), axis=1)
-        rear = np.argmax(dist)
-        return centers[front], centers[rear], mask
+    def _get_roi(self, mask):
+        x, y, w, h = cv2.boundingRect(mask)
+        if not mask[y:(y + h), x:(x + w)].size:
+            return None
+        return x, y, w, h       
+
+    def _get_coords(self, image):
+        corners, ids, _ = cv2.aruco.detectMarkers(image, self.dictionary)
+        if ids is None:
+            return None, None
+        corners = [c for c, i in zip(corners, ids) if i == 0]
+        if not corners:
+            return None, None
+        selected = np.squeeze(corners[0])
+        front = np.round(np.mean(selected[0:2], axis=0))
+        rear = np.round(np.mean(selected[2:4], axis=0))
+        return front, rear
 
     def detect(self, image):
-        mask_1 = self._make_mask(image, self.range_1_lower, self.range_1_upper)
-        mask_2 = self._make_mask(image, self.range_2_lower, self.range_2_upper)
-        mask = cv2.bitwise_or(mask_1, mask_2)
-        front, rear, mask = self._get_coords(mask)
-        return front, rear, mask
+        #mask_1 = self._make_mask(image, self.range_1_lower, self.range_1_upper)
+        #mask_2 = self._make_mask(image, self.range_2_lower, self.range_2_upper)
+        #mask = cv2.bitwise_or(mask_1, mask_2)
+        front_left, front_right = self._get_coords(image)
+        return front_left, front_right
 
 class TargetLocator(object):
 
@@ -158,7 +153,7 @@ class AgentLocator(object):
         self.projector = RANSACProjector()
 
     def locate(self, image, display_image=None):
-        image_front, image_rear, mask = self.detector.detect(image)
+        image_front, image_rear = self.detector.detect(image)
         if image_front is None:
             return (None, None, None), display_image
         object_front = self.projector.project(np.array([image_front]), 0.5)
@@ -176,12 +171,12 @@ def watch_offboard(camera, target_locator, agent_locator, show=False):
         try:
             image = camera.capture_single()
             targets, display_image = target_locator.locate(image, image.copy())
-            #agent, display_image = agent_locator.locate(image, display_image)
+            agent, display_image = agent_locator.locate(image, display_image)
             if show:
                 cv2.imshow("analysis_feed", display_image)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
-            yield targets, None
+            yield targets, agent
         except (KeyboardInterrupt, SystemExit):
             return
 

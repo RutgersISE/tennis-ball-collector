@@ -18,8 +18,9 @@ def main(args):
             client.send("onboard_targets", targets)
     else:
         agent_locator = AgentLocator()
-        for targets, _ in watch_offboard(camera, target_locator, 
-                                             agent_locator, args.show):
+        for targets, agent in watch_offboard(camera, target_locator, 
+                                         agent_locator, args.show):
+            client.send("agent_abs", agent)
             client.send("offboard_targets", targets)
 
 if __name__ == "__main__":

@@ -13,38 +13,28 @@ from components.trackers import MemorylessTracker
 def main(port):
     """ main function for server """
     server = Server(args.port)
-    tracker = MemorylessTracker()
+    onboard_tracker = MemorylessTracker()
+    offboard_tracker = MemorylessTracker()
     for message_type, message in server.listen():
-<<<<<<< HEAD
-        if message_type == "send_target":
-            target = tracker.get_target()
-            #if not target:
-            #    target = searcher.get_target()
+        print("message recieved: ", message_type)
+        if message_type == "get_target_rel":
+            target = onboard_tracker.get_target_rel()
+            if not target:
+                target = offboard_tracker.get_target_rel()
             server.reply(target)
-        elif message_type == "offboard_targets":
-=======
-        if message_type == "send_target_rel":
-            target = tracker.get_target_rel()
-            print(target)
-            server.reply(target)
-            print("sent 1 target_rel")
-        elif message_type == "abs_targets":
->>>>>>> d9e333b76dca4faf28b469695d2d6bc1fc7cbabd
-            targets = message
-            server.reply(True)
-            print("recieved %d targets from offboard camera" % len(targets))
-            tracker.update_target_abs(targets)
-        elif message_type == "onboard_targets":
-            targets = message 
-            server.reply(True)
-            print("recieved %d targets from onboard camera" % len(targets))
-            tracker.update_target_rel(targets)
-        elif message_type == "rel_agent": 
-            agent = message
-            server.reply(True)
-            tracker.update_agent_rel(*agent)
         else:
-            server.reply(False)
+            server.reply(True)
+        
+        if message_type == "offboard_targets":
+            offboard_tracker.update_target_abs(message)
+        elif message_type == "onboard_targets":
+            onboard_tracker.update_target_rel(message)
+        elif message_type == "agent_rel": 
+            onboard_tracker.update_agent_rel(*message)
+            offboard_tracker.update_agent_rel(*message)
+        elif message_type == "agent_abs":
+            onboard_tracker.update_agent_abs(*message)
+            offboard_tracker.update_agent_abs(*message)                
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

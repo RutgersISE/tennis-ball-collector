@@ -6,18 +6,18 @@ __author__ = "Andrew Benton"
 __version__ = "0.1.0"
 
 from components.communication import Client
-from components.commanders import ArduinoCommander
+from components.commanders import DummyCommander
 from components.controllers import PointAndShootController
 
 def main(args):
     """main function for controller"""
     client = Client(args.port, args.host)
-    commander = ArduinoCommander(args.device, args.baud)
+    #commander = ArduinoCommander(args.device, args.baud)
+    commander = DummyCommander()
     controller = PointAndShootController(max_turn_time=args.max_turn_time,
                                          max_forward_time=args.max_forward_time,
                                          buffer_distance=args.buffer_distance)
-    for target_rel in client.listen("send_target_rel"):
-        print(target_rel)
+    for target_rel in client.listen("get_target_rel"):
         if target_rel is None:
             commander.command(0, 0, 1)
             continue
@@ -25,7 +25,7 @@ def main(args):
             move, delta = controller.control(*target_rel)
             if move:
                 commander.command(*move)
-                client.send("new_position", delta)
+                client.send("update_agent_rel", delta)
             else:
                 commander.command(0, 0, 1)
     else:
