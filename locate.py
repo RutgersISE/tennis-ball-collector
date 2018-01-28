@@ -15,12 +15,12 @@ def main(args):
     if args.onboard:
         for targets in watch_onboard(camera, target_locator,
                                      args.show):
-            client.send("rel_targets", targets)
+            client.send("onboard_targets", targets)
     else:
         agent_locator = AgentLocator()
         for targets, _ in watch_offboard(camera, target_locator, 
                                              agent_locator, args.show):
-            client.send("abs_targets", targets)
+            client.send("offboard_targets", targets)
 
 if __name__ == "__main__":
     from argparse import ArgumentParser

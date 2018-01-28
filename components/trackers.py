@@ -17,7 +17,7 @@ def pol2cart(rho, phi):
     y = rho * np.sin(phi)
     return(x, y)
 
-class LatestSentTracker(object):
+class MemorylessTracker(object):
 
     def __init__(self):
         self.targets = np.empty((2, 0), dtype=np.float32)

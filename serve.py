@@ -8,24 +8,27 @@ __version__ = "0.1.0"
 import time
 
 from components.communication import Server
-from components.trackers import LatestSentTracker
+from components.trackers import MemorylessTracker
 
 def main(port):
     """ main function for server """
     server = Server(args.port)
-    tracker = LatestSentTracker()
+    tracker = MemorylessTracker()
     for message_type, message in server.listen():
         if message_type == "send_target":
             target = tracker.get_target()
+            #if not target:
+            #    target = searcher.get_target()
             server.reply(target)
-        elif message_type == "abs_targets":
+        elif message_type == "offboard_targets":
             targets = message
             server.reply(True)
+            print("recieved %d targets from offboard camera" % len(targets))
             tracker.update_target_abs(targets)
-        elif message_type == "rel_targets":
+        elif message_type == "onboard_targets":
             targets = message 
             server.reply(True)
-            print("recieved %d rel_targets" % len(targets))
+            print("recieved %d targets from onboard camera" % len(targets))
             tracker.update_target_rel(targets)
         elif message_type == "rel_agent": 
             agent = message
