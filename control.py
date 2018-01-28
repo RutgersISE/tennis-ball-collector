@@ -6,14 +6,13 @@ __author__ = "Andrew Benton"
 __version__ = "0.1.0"
 
 from components.communication import Client
-from components.commanders import DummyCommander
+from components.commanders import ArduinoCommander
 from components.controllers import PointAndShootController
 
 def main(args):
     """main function for controller"""
     client = Client(args.port, args.host)
-    #commander = ArduinoCommander(args.device, args.baud)
-    commander = DummyCommander()
+    commander = ArduinoCommander(args.device, args.baud)
     controller = PointAndShootController(max_turn_time=args.max_turn_time,
                                          max_forward_time=args.max_forward_time,
                                          buffer_distance=args.buffer_distance)
