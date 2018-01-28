@@ -15,12 +15,21 @@ def main(port):
     server = Server(args.port)
     tracker = MemorylessTracker()
     for message_type, message in server.listen():
+<<<<<<< HEAD
         if message_type == "send_target":
             target = tracker.get_target()
             #if not target:
             #    target = searcher.get_target()
             server.reply(target)
         elif message_type == "offboard_targets":
+=======
+        if message_type == "send_target_rel":
+            target = tracker.get_target_rel()
+            print(target)
+            server.reply(target)
+            print("sent 1 target_rel")
+        elif message_type == "abs_targets":
+>>>>>>> d9e333b76dca4faf28b469695d2d6bc1fc7cbabd
             targets = message
             server.reply(True)
             print("recieved %d targets from offboard camera" % len(targets))

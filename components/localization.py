@@ -73,6 +73,8 @@ class TargetDetector(object):
 
     def _get_coords(self, mask):
         x, y, w, h = cv2.boundingRect(mask)
+        if not mask[y:(y + h), x:(x + w)].size:
+            return np.empty((2, 0), dtype=np.float32)
         keypoints = self.blob_detector.detect(mask[y:(y+h), x:(x+w)])
         image_points = np.array([(int(point.pt[0] + x), int(point.pt[1] + y)) for point in keypoints])
         return image_points
@@ -138,7 +140,7 @@ class TargetLocator(object):
     def locate(self, image, display_image=None):
         image_points, mask = self.detector.detect(image)
         object_points = self.projector.project(image_points, 1/12.)
-        if display_image is not None:
+        if display_image is not None and object_points.size:
             for (img_x, img_y), (obj_x, obj_y) in zip(image_points, object_points):
                 cv2.circle(display_image, (img_x, img_y), 3, (0, 0, 0), -1)
                 text = "(%3.1f, %3.1f)" % (obj_x, obj_y)

@@ -23,10 +23,7 @@ class MemorylessTracker(object):
         self.targets = np.empty((2, 0), dtype=np.float32)
         self.curr_x = self.curr_y = self.curr_phi = 0
 
-    def update_target(self, targets):
-        self.targets = np.array(targets)
-
-    def get_target(self):
+    def get_target_rel(self):
         if not self.targets.size:
             return None
         self.agent = np.array([self.curr_x, self.curr_y])
@@ -53,11 +50,15 @@ class MemorylessTracker(object):
         self.curr_x, self.curr_y, self.curr_phi = x, y, phi
 
     def update_target_rel(self, targets):
-        #targets_x = np.array([x for x, _ in targets])
-        #targets_y = np.array([y for _, y in targets])
-        #targets_rho, targets_phi = cart2pol(targets_x, targets_y)
-        pass
-
+        rel_targets_x = np.array([x for x, _ in targets])
+        rel_targets_y = np.array([y for _, y in targets])
+        targets_rho, targets_phi = cart2pol(rel_targets_x, rel_targets_y)
+        abs_targets_x = targets_rho*np.sin(-(targets_phi + self.curr_phi))
+        abs_targets_x += self.curr_x
+        abs_targets_y = targets_rho*np.cos(targets_phi + self.curr_phi)
+        abs_targets_y += self.curr_y
+        self.targets = np.vstack((abs_targets_x, abs_targets_y)).T
+        
     def update_agent_rel(self, rho, phi):
         self.curr_phi += phi
         self.curr_x += rho*np.cos(self.curr_phi)
