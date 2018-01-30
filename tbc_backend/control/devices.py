@@ -11,7 +11,7 @@ import time
 from serial import Serial
 
 
-class ArduinoCommander(object):
+class ArduinoRobot(object):
 
     def __init__(self, port, baud):
         self.port = port

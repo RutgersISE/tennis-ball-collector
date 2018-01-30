@@ -1,24 +1,25 @@
-import os
-import platform
+#!/usr/bin/env python3
 
-from components.communication import Client
-from components.localization import TargetLocator, AgentLocator, watch_onboard, watch_offboard
-if platform.uname()[4][:3] == 'arm':
-    from components.cameras import CalibratedPicamera as Camera
-else:
-    from components.cameras import CalibratedCamera as Camera
+"""
+Vision system for tennis ball collector.
+"""
+
+__author__ = "Andrew Benton"
+__version__ = "0.1.0"
+
+from tbc_backend.common import Client
+from tbc_backend.vision import *
 
 def main(args):
     camera = Camera(args.device)
     target_locator = TargetLocator()
     client = Client(args.port, args.host)
     if args.onboard:
-        for targets in watch_onboard(camera, target_locator,
-                                     args.show):
+        for targets in watch_onboard(camera, target_locator, args.show):
             client.send("onboard_targets", targets)
     else:
         agent_locator = AgentLocator()
-        for targets, agent in watch_offboard(camera, target_locator, 
+        for targets, agent in watch_offboard(camera, target_locator,
                                          agent_locator, args.show):
             client.send("agent_abs", agent)
             client.send("offboard_targets", targets)
@@ -42,8 +43,5 @@ if __name__ == "__main__":
     parser.add_argument("--port", dest="port", default="5555", type=str,
                         help="Port for publishing. Defaults to '5555'.")
     args = parser.parse_args()
-
-    if os.name == "nt":
-        args.device = 0
 
     main(args)
