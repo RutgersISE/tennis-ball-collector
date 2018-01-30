@@ -17,6 +17,7 @@ def main(port):
     offboard_tracker = MemorylessTracker()
     for message_type, message in server.listen():
         print("message recieved: ", message_type)
+        print(message)
         if message_type == "get_target_rel":
             target = onboard_tracker.get_target_rel()
             if not target:

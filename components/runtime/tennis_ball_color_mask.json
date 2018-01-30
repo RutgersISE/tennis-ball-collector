@@ -1,7 +1,7 @@
 {
-  "lower" : [25, 50, 50],
-  "upper" : [35, 255, 255],
-  "minarea" : 1000,
-  "ksize" : [15, 15],
-  "iterations" : 3
+  "lower" : [20,  25,  25],
+  "upper" : [50, 255, 255],
+  "minarea" : 10,
+  "ksize" : [ 5,  5],
+  "iterations" : 1
 }

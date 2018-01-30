@@ -86,14 +86,12 @@ class TargetDetector(object):
 
 class AgentDetector(object):
 
-    range_1_lower = np.array([  0,  50,  50], np.uint8)
-    range_1_upper = np.array([ 10, 255, 255], np.uint8)
-    range_2_lower = np.array([170,  50,  50], np.uint8)
-    range_2_upper = np.array([180, 255, 255], np.uint8)
-    dictionary = cv2.aruco.Dictionary_create(50, 4)
-
     def __init__(self):
-        pass
+        self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_50)
+        marker_0 = cv2.aruco.drawMarker(self.dictionary, 0, 1000)
+        marker_1 = cv2.aruco.drawMarker(self.dictionary, 1, 1000)
+        cv2.imwrite("marker_0.jpg", marker_0)
+        cv2.imwrite("marker_1.jpg", marker_1)
 
     def _make_mask(self, image, lower, upper):
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -120,9 +118,6 @@ class AgentDetector(object):
         return front, rear
 
     def detect(self, image):
-        #mask_1 = self._make_mask(image, self.range_1_lower, self.range_1_upper)
-        #mask_2 = self._make_mask(image, self.range_2_lower, self.range_2_upper)
-        #mask = cv2.bitwise_or(mask_1, mask_2)
         front_left, front_right = self._get_coords(image)
         return front_left, front_right
 
@@ -159,8 +154,11 @@ class AgentLocator(object):
         object_front = self.projector.project(np.array([image_front]), 0.5)
         object_rear = self.projector.project(np.array([image_rear]), 0.5)
         object_delta = object_front - object_rear
-        x, y = tuple(object_delta[0])
-        phi = np.arctan2(y, x)
+        delta_x, delta_y = tuple(object_delta[0])
+        x, y = tuple(object_front[0])
+        phi = np.arctan2(delta_y, delta_x)
+        x += .5*np.cos(phi)
+        y += .5*np.sin(phi)
         if display_image is not None:
             cv2.arrowedLine(display_image, tuple(image_rear), tuple(image_front),
                             (0, 0, 0), 3)
@@ -171,11 +169,13 @@ def watch_offboard(camera, target_locator, agent_locator, show=False):
         try:
             image = camera.capture_single()
             targets, display_image = target_locator.locate(image, image.copy())
+            targets = [(x, y) for x, y in targets if ((0 < x < 8) and (0 < y < 8))]
             agent, display_image = agent_locator.locate(image, display_image)
             if show:
-                cv2.imshow("analysis_feed", display_image)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                cv2.imwrite("analysis_feed.jpg", display_image)
+                #cv2.imshow("analysis_feed", display_image)
+                #if cv2.waitKey(1) & 0xFF == ord('q'):
+                #    break
             yield targets, agent
         except (KeyboardInterrupt, SystemExit):
             return
