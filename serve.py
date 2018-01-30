@@ -13,19 +13,24 @@ from components.trackers import MemorylessTracker
 def main(port):
     """ main function for server """
     server = Server(args.port)
-    onboard_tracker = MemorylessTracker()
-    offboard_tracker = MemorylessTracker()
+    onboard_tracker = MemorylessTracker(in_view=False)
+    offboard_tracker = MemorylessTracker(in_view=True)
+    misses = 0
     for message_type, message in server.listen():
         print("message recieved: ", message_type)
         print(message)
         if message_type == "get_target_rel":
             target = onboard_tracker.get_target_rel()
             if not target:
-                target = offboard_tracker.get_target_rel()
+                if not misses % 2:
+                    target = None
+                else:
+                    target = offboard_tracker.get_target_rel()
+                misses += 1
             server.reply(target)
         else:
             server.reply(True)
-        
+        print(message_type, message)        
         if message_type == "offboard_targets":
             offboard_tracker.update_target_abs(message)
         elif message_type == "onboard_targets":

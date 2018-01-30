@@ -88,10 +88,6 @@ class AgentDetector(object):
 
     def __init__(self):
         self.dictionary = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_50)
-        marker_0 = cv2.aruco.drawMarker(self.dictionary, 0, 1000)
-        marker_1 = cv2.aruco.drawMarker(self.dictionary, 1, 1000)
-        cv2.imwrite("marker_0.jpg", marker_0)
-        cv2.imwrite("marker_1.jpg", marker_1)
 
     def _make_mask(self, image, lower, upper):
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -151,6 +147,7 @@ class AgentLocator(object):
         image_front, image_rear = self.detector.detect(image)
         if image_front is None:
             return (None, None, None), display_image
+        print(image_front)
         object_front = self.projector.project(np.array([image_front]), 0.5)
         object_rear = self.projector.project(np.array([image_rear]), 0.5)
         object_delta = object_front - object_rear

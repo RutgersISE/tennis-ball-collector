@@ -28,8 +28,8 @@ class PointAndShootController(object):
 
     def __init__(self, turn_scaling=98, forward_scaling=115,
                 buffer_distance=1.5, max_turn_time=0.5, max_forward_time=1.0):
-        self.min_speed = 10
-        self.max_speed = 60
+        self.min_speed = 15
+        self.max_speed = 70
         self.turn_scaling = turn_scaling
         self.forward_scaling = forward_scaling
         self.buffer_distance = buffer_distance
@@ -62,6 +62,10 @@ class PointAndShootController(object):
         return move, delta
 
     def control(self, rho, phi, finish, tol=1e-1):
+        if phi > np.pi:
+            phi = 2*np.pi - phi
+        elif phi < -np.pi:
+            phi = phi + 2*np.pi
         rho += self.buffer_distance
         outside = rho > self.outer_radius
         inside = rho < self.inner_radius
