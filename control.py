@@ -5,6 +5,8 @@ Control frontend for tennis ball collector.
 __author__ = "Andrew Benton"
 __version__ = "0.1.0"
 
+import time
+
 from components.communication import Client
 from components.commanders import ArduinoCommander
 from components.controllers import PointAndShootController
@@ -17,8 +19,9 @@ def main(args):
                                          max_forward_time=args.max_forward_time,
                                          buffer_distance=args.buffer_distance)
     for target_rel in client.listen("get_target_rel"):
+        print(target_rel)
         if target_rel is None:
-            commander.command(0, 0, 1)
+            commander.command(0, 0, .5)
             continue
         else:
             move, delta = controller.control(*target_rel)

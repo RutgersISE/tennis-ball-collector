@@ -86,14 +86,8 @@ class TargetDetector(object):
 
 class AgentDetector(object):
 
-    range_1_lower = np.array([  0,  50,  50], np.uint8)
-    range_1_upper = np.array([ 10, 255, 255], np.uint8)
-    range_2_lower = np.array([170,  50,  50], np.uint8)
-    range_2_upper = np.array([180, 255, 255], np.uint8)
-    dictionary = cv2.aruco.Dictionary_create(50, 4)
-
     def __init__(self):
-        pass
+        self.dictionary = cv2.aruco.Dictionary_create(50, 4)
 
     def _make_mask(self, image, lower, upper):
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -156,6 +150,7 @@ class AgentLocator(object):
         image_front, image_rear = self.detector.detect(image)
         if image_front is None:
             return (None, None, None), display_image
+        print(image_front)
         object_front = self.projector.project(np.array([image_front]), 0.5)
         object_rear = self.projector.project(np.array([image_rear]), 0.5)
         object_delta = object_front - object_rear
