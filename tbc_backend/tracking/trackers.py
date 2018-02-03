@@ -30,15 +30,12 @@ class MemorylessTracker(object):
             return None
         self.agent = np.array([self.curr_x, self.curr_y])
         delta = self.targets - self.agent
-        print(delta)
         if self.in_view:
             exclude = np.logical_and(np.abs(delta[:, 0]) < 1,
                                      np.abs(delta[:, 1]) < 1)
-            print(exclude)
             delta = delta[~exclude]
         if not delta.size:
             return None
-        print(delta)
         dist = np.sqrt(np.sum(np.power(delta, 2), axis=1))
         angle = -(self.curr_phi - np.arctan2(delta[:, 1], delta[:, 0]))
         target_idx = np.argmin(dist)
@@ -73,7 +70,7 @@ class MemorylessTracker(object):
         abs_targets_y = targets_rho*np.sin(targets_phi + self.curr_phi)
         abs_targets_y += self.curr_y
         self.targets = np.vstack((abs_targets_x, abs_targets_y)).T
-        
+
     def update_agent_rel(self, rho, phi):
         self.curr_phi += phi
         self.curr_x += rho*np.cos(self.curr_phi)

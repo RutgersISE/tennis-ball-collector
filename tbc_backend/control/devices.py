@@ -29,7 +29,7 @@ class ArduinoRobot(object):
         self.serial.flush()
         self.serial.write(message.encode())
         self.last_message = message
-        time.sleep(.10) # allows arduino to timeout
+        time.sleep(.05) # allows arduino to timeout
 
     def command(self, left_speed, right_speed, move_time=None, stop=False):
         self._send(left_speed, right_speed)
