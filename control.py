@@ -39,11 +39,17 @@ def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
             driver.stop()
             sleep(wait)
             target = searcher.targets_rel
-            if not target: continue
+            if not target:
+                continue
             move, delta = controller.control(*target)
             driver.command(*move)
-            _, _, move_time, _ = move
-            sleep(move_time)            
+             _, _, move_time, _ = move
+            while not tracker.targets_rel:
+                wait_time = min(update, move_time)
+                move_time -= wait_time
+                if move_time < 0:
+                    break
+                sleep(wait_time)
     driver.stop()
 
 def main(args):
