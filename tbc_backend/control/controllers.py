@@ -27,7 +27,7 @@ class PointAndShootController(object):
     """
 
     def __init__(self, turn_scaling=98, forward_scaling=115, min_speed=15,
-                max_speed=70, buffer_distance=1.5, max_turn_time=0.5,
+                max_speed=60, buffer_distance=1.5, max_turn_time=0.5,
                 max_forward_time=1.0):
         self.min_speed = min_speed
         self.max_speed = max_speed
@@ -62,7 +62,7 @@ class PointAndShootController(object):
         delta = (disp_rho, 0)
         return move, delta
 
-    def control(self, rho, phi, finish, tol=1e-1):
+    def control(self, rho, phi, finish, tol=3e-1):
         if phi > np.pi:
             phi = 2*np.pi - phi
         elif phi < -np.pi:
