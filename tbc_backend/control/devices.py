@@ -16,7 +16,7 @@ class ArduinoRobot(object):
     def __init__(self, port, baud):
         self.port = port
         self.baud = baud
-        self.serial = Serial(self.port, self.baud, timeout=None)
+        #self.serial = Serial(self.port, self.baud, timeout=None)
         time.sleep(2)
         self.curr_message = None
         self._timer = None
@@ -27,8 +27,8 @@ class ArduinoRobot(object):
         if next_message == self.curr_message:
             # sending this message is redundant
             return
-        self.serial.flush()
-        self.serial.write(next_message.encode())
+        #self.serial.flush()
+        #self.serial.write(next_message.encode())
         self.curr_message = next_message
         time.sleep(.05) # allows arduino to timeout
 
