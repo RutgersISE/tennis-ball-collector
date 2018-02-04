@@ -7,46 +7,60 @@ Tracking and control server for tennis ball collector.
 __author__ = "Andrew Benton"
 __version__ = "0.1.0"
 
-import numpy as np
+from time import sleep
+from threading import Thread
 
 from tbc_backend.common import Client, Server
-from tbc_backend.tracking import MemorylessTracker
+from tbc_backend.tracking import ThreadsafeTracker
 from tbc_backend.control import ArduinoRobot, PointAndShootController
+
+def listen(server, onboard, offboard):
+    for message_type, message in server.listen(autoreply=True):
+        print("message:", message_type)
+        if message_type == "offboard_targets":
+            targets = message
+            offboard.targets_abs = targets
+        elif message_type == "onboard_targets":
+            targets = message
+            onboard.targets_rel = targets
+        elif message_type == "agent_abs":
+            x, y, phi = message
+            tracker.agent_abs = x, y, phi
+
+def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
+    while True:
+        target = tracker.targets_rel
+        if not target:
+            sleep(wait)
+            target = searcher.targets_rel
+        print("curr_target:", target)
+        if not target:
+            sleep(wait)
+            continue
+        move, delta = controller.control(*target)
+        driver.command(*move)
+        sleep(update)
+    driver.stop()
 
 def main(args):
     track_server = Server(args.port)
     driver = ArduinoRobot(args.device, args.baud)
-    tracker = MemorylessTracker(in_view=False)
-    searcher = MemorylessTracker(in_view=True)
+    tracker = ThreadsafeTracker(in_view=False)
+    searcher = ThreadsafeTracker(in_view=True)
     controller = PointAndShootController(turn_scaling=args.turn_scaling,
                                          forward_scaling=args.forward_scaling,
                                          max_turn_time=args.max_turn_time,
                                          max_forward_time=args.max_forward_time,
                                          buffer_distance=args.buffer_distance)
-    change = False
-    for message_type, message in track_server.listen(autoreply=True):
-        if message_type == "offboard_targets":
-            searcher.update_target_abs(message)
-            change = True
-        elif message_type == "onboard_targets":
-            tracker.update_target_rel(message)
-            change = True
-        elif message_type == "agent_rel":
-            tracker.update_agent_rel(*message)
-            searcher.update_agent_rel(*message)
-        elif message_type == "agent_abs":
-            tracker.update_agent_abs(*message)
-            searcher.update_agent_abs(*message)
+    listen_thread = Thread(target=listen,
+                           args=(track_server, tracker, searcher))
+    move_thread = Thread(target=move, 
+                         args=(controller, driver, tracker, searcher))
+    listen_thread.start()
+    move_thread.start()
+    listen_thread.join()
+    move_thread.join()
 
-        if change:
-            target = tracker.get_target_rel()
-            if not target:
-                target = searcher.get_target_rel()
-            print("curr_target:", target)
-            move, delta = controller.control(*target)
-            driver.command(*move)
-            change = False
-    driver.stop()
 
 if __name__ == "__main__":
     from argparse import ArgumentParser
