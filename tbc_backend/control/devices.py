@@ -30,19 +30,22 @@ class ArduinoRobot(object):
         self.serial.flush()
         self.serial.write(next_message.encode())
         self.curr_message = next_message
-        time.sleep(.10) # allows arduino to timeout
+        time.sleep(.15) # allows arduino to timeout
 
-    def _wait(self, move_time):
+    def _wait(self, move_time, stop):
         if move_time is None:
             return
         if self._timer:
             self._timer.cancel()
-        self._timer = Timer(move_time, self.stop)
-        self._timer.start()
+        if stop:
+            self._timer = Timer(move_time, self.stop)
+            self._timer.start()
+        else:
+            self._timer = None
 
     def command(self, left_speed, right_speed, move_time=None, stop=False):
         self._send(left_speed, right_speed)
-        self._wait(move_time)
+        self._wait(move_time, stop)
 
     def stop(self):
         self._send(0, 0)

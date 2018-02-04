@@ -39,7 +39,7 @@ def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
             continue
         move, delta = controller.control(*target)
         driver.command(*move)
-        _, _, move_time = move
+        _, _, move_time, _ = move
         sleep(min(update, move_time))
     driver.stop()
 
