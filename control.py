@@ -7,7 +7,7 @@ Tracking and control server for tennis ball collector.
 __author__ = "Andrew Benton"
 __version__ = "0.1.0"
 
-from time import sleep
+from time import time, sleep
 from threading import Thread
 
 from tbc_backend.common import Client, Server
@@ -44,12 +44,11 @@ def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
             move, delta = controller.control(*target)
             driver.command(*move)
             _, _, move_time, _ = move
-            while not tracker.targets_rel:
+            while move_time > .10:
+                if tracker.targets_rel:
+                    break
                 wait_time = min(update, move_time)
                 move_time -= wait_time
-                if move_time < 0 or wait_time < 0:
-                    break
-                print(move_time, wait_time)
                 sleep(wait_time)
     driver.stop()
 
