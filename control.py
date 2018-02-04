@@ -30,18 +30,20 @@ def listen(server, onboard, offboard):
 def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
     while True:
         target = tracker.targets_rel
-        if not target:
+        if target:
+            move, delta = controller.control(*target)
+            driver.command(*move)
+            _, _, move_time, _ = move
+            sleep(min(update, move_time))
+        else:
             driver.stop()
             sleep(wait)
             target = searcher.targets_rel
-        print("curr_target:", target)
-        if not target:
-            sleep(wait)
-            continue
-        move, delta = controller.control(*target)
-        driver.command(*move)
-        _, _, move_time, _ = move
-        sleep(min(update, move_time))
+            if not target: continue
+            move, delta = controller.control(*target)
+            driver.command(*move)
+            _, _, move_time, _ = move
+            sleep(move_time)            
     driver.stop()
 
 def main(args):
