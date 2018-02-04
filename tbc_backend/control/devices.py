@@ -30,7 +30,7 @@ class ArduinoRobot(object):
         self.serial.flush()
         self.serial.write(next_message.encode())
         self.curr_message = next_message
-        time.sleep(.05) # allows arduino to timeout
+        time.sleep(.10) # allows arduino to timeout
 
     def _wait(self, move_time):
         if move_time is None:
