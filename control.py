@@ -44,12 +44,14 @@ def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
             move, delta = controller.control(*target)
             driver.command(*move)
             _, _, move_time, _ = move
-            while move_time > .10:
+            while move_time > update:
                 if tracker.targets_rel:
                     break
                 wait_time = min(update, move_time)
                 move_time -= wait_time
                 sleep(wait_time)
+            else:
+                sleep(move_time)
     driver.stop()
 
 def main(args):
