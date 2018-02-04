@@ -79,7 +79,7 @@ class PointAndShootController(object):
                                                  self.max_speed/2,
                                                  finish)
             else:
-                rho -= self.outer_radius
+                rho -= (self.outer_radius + self.inner_radius)/2
                 move, delta = self._compute_forward(rho,
                                                     self.max_speed,
                                                     finish)
