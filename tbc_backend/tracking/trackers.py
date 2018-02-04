@@ -85,16 +85,17 @@ class ThreadsafeTracker(object):
             return self.curr_x, self.curr_y, self.curr_phi
 
     @agent_abs.setter
-    def agent_abs(self, x, y, phi):
+    def agent_abs(self, position)
         with self.agent_lock:
-            self.curr_x, self.curr_y, self.curr_phi = x, y, phi
+            self.curr_x, self.curr_y, self.curr_phi = position
 
     @property
     def agent_rel(self):
         return 0, 0, 0
 
     @agent_rel.setter
-    def agent_rel(self, rho, phi):
+    def agent_rel(self, position):
+        rho, phi = position
         with self.agent_lock:
             self.curr_phi += phi
             self.curr_x += rho*np.cos(self.curr_phi)

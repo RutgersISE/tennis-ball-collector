@@ -25,7 +25,7 @@ def listen(server, onboard, offboard):
             onboard.targets_rel = targets
         elif message_type == "agent_abs":
             x, y, phi = message
-            tracker.agent_abs = x, y, phi
+            offboard.agent_abs = x, y, phi
 
 def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
     while True:
