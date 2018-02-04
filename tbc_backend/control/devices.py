@@ -44,8 +44,8 @@ class ArduinoRobot(object):
             self._timer = None
 
     def command(self, left_speed, right_speed, move_time=None, stop=False):
-        self._send(left_speed, right_speed)
         self._wait(move_time, stop)
+        self._send(left_speed, right_speed)
 
     def stop(self):
         self._send(0, 0)
