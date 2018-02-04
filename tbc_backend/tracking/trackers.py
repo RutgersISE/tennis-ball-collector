@@ -85,7 +85,7 @@ class ThreadsafeTracker(object):
             return self.curr_x, self.curr_y, self.curr_phi
 
     @agent_abs.setter
-    def agent_abs(self, position)
+    def agent_abs(self, position):
         with self.agent_lock:
             self.curr_x, self.curr_y, self.curr_phi = position
 
