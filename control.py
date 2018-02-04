@@ -31,6 +31,7 @@ def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
     while True:
         target = tracker.targets_rel
         if not target:
+            driver.stop()
             sleep(wait)
             target = searcher.targets_rel
         print("curr_target:", target)
