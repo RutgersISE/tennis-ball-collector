@@ -16,7 +16,7 @@ from tbc_backend.control import ArduinoRobot, PointAndShootController
 
 def listen(server, onboard, offboard):
     for message_type, message in server.listen(autoreply=True):
-        print("message:", message_type)
+        #print("message:", message_type)
         if message_type == "offboard_targets":
             targets = message
             offboard.targets_abs = targets
@@ -27,7 +27,7 @@ def listen(server, onboard, offboard):
             x, y, phi = message
             offboard.agent_abs = x, y, phi
 
-def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
+def move(controller, driver, tracker, searcher, wait=1.00, update=0.5):
     while True:
         target = tracker.targets_rel
         if target:
@@ -41,6 +41,7 @@ def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
             target = searcher.targets_rel
             if not target:
                 continue
+            print(target)
             move, delta = controller.control(*target)
             driver.command(*move)
             _, _, move_time, _ = move

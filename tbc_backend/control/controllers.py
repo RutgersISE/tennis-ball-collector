@@ -62,7 +62,7 @@ class PointAndShootController(object):
         delta = (disp_rho, 0)
         return move, delta
 
-    def control(self, rho, phi, finish, tol=3e-1):
+    def control(self, rho, phi, finish, tol=2e-1):
         if phi > np.pi:
             phi = 2*np.pi - phi
         elif phi < -np.pi:
