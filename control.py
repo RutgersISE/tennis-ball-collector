@@ -47,9 +47,9 @@ def move(controller, driver, tracker, searcher, wait=1.00, update=0.50):
             while not tracker.targets_rel:
                 wait_time = min(update, move_time)
                 move_time -= wait_time
-                if move_time < 0:
+                if move_time < 0 or wait_time < 0:
                     break
-                print(wait_time)
+                print(move_time, wait_time)
                 sleep(wait_time)
     driver.stop()
 
