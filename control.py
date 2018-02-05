@@ -27,7 +27,7 @@ def listen(server, onboard, offboard):
             x, y, phi = message
             offboard.agent_abs = x, y, phi
 
-def move(controller, driver, tracker, searcher, wait=0.25, update=0.25):
+def move(controller, driver, tracker, searcher, wait=0.5, update=0.5):
     while True:
         target = tracker.targets_rel
         if target:
